@@ -17,7 +17,9 @@ bool playactive = false;
 bool storyactive = false;
 bool highscoreactive = false;
 bool gameon = false;
-int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- name input
+int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername
+char playername[100];
+
 /*
 A LOT OF THINGS TO BE INCLUDED HERE SUCH AS DEFINING SOME CONST. DEFINING STRUCTURES, DEFINING VARIABLES
 */
@@ -30,6 +32,8 @@ char bg[10][40] = {
 	"backgrounds\\highscores.bmp", // 3
 	"backgrounds\\credit.bmp",	   // 4
 	"backgrounds\\htp.bmp",		   // 5
+	"backgrounds\\username.bmp"	   // 6
+
 };
 
 // including music and sound fx files
@@ -47,6 +51,7 @@ void soundcontrol();
 void MenuSetup();
 void menumousecontrol(int button, int state, int mx, int my);
 void backbuttonfunction(int button, int state, int mx, int my);
+void playernamemousecontrol(int button, int state, int mx, int my);
 
 void iDraw()
 {
@@ -55,6 +60,11 @@ void iDraw()
 	if (GameState == 0)
 	{
 		soundbutton();
+	}
+	if (GameState == 6)
+	{
+		iSetColor(0, 0, 0);
+		iText(300, 310, playername, GLUT_BITMAP_TIMES_ROMAN_24);
 	}
 }
 
@@ -72,7 +82,9 @@ void iMouse(int button, int state, int mx, int my)
 			// when we are in main menu
 		case 0:
 			menumousecontrol(button, state, mx, my);
-
+			break;
+		case 6:
+			playernamemousecontrol(button, state, mx, my);
 			break;
 
 		default:
@@ -84,12 +96,31 @@ void iMouse(int button, int state, int mx, int my)
 	{
 	}
 }
+// taking playername
+int ind = -1;
 
 void iKeyboard(unsigned char key)
 {
-	if (key == 'q')
+	if (GameState == 6)
 	{
-		exit(0);
+		if (ind != -1 && key == '\b')
+		{
+			ind--;
+			playername[ind + 1] = '\0';
+		}
+		else if (ind != -1 && key == '\r')
+		{
+			GameState = 1;
+			gameon = true;
+			soundcontrol();
+			printf("Player name is %s\n", playername);
+		}
+		else if (key != '\r')
+		{
+			playername[ind + 1] = key;
+			playername[ind + 2] = '\0';
+			ind++;
+		}
 	}
 	// place your codes for other keys here
 }
@@ -123,9 +154,7 @@ void menumousecontrol(int button, int state, int mx, int my)
 	// clicked play button
 	if (mx >= 195 && mx <= 195 + buttonwidth && my >= 403 && my <= 403 + buttonheight)
 	{
-		GameState = 1;
-		gameon = true;
-		soundcontrol();
+		GameState = 6;
 	}
 	// clicked story button
 	else if (mx >= 195 && mx <= 195 + buttonwidth && my >= 325 && my <= 325 + buttonheight)
@@ -164,6 +193,19 @@ void backbuttonfunction(int button, int state, int mx, int my)
 		if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
 		{
 			GameState = 0; // getting back to main menu
+		}
+	}
+}
+void playernamemousecontrol(int button, int state, int mx, int my)
+{
+	if (mx >= 428 && mx <= 658 && my >= 185 && my <= 245)
+	{
+		if (ind != -1)
+		{
+			GameState = 1;
+			gameon = true;
+			soundcontrol();
+			printf("Player name is %s\n", playername);
 		}
 	}
 }
