@@ -1,7 +1,4 @@
 // including necessary header files.
-
-// kalke last bhibhinno state er jonno mouse click dara bhinno jinish control er code korchilam
-
 #include "iGraphics.h"
 #include <windows.h>
 #include "mmsystem.h"
@@ -17,13 +14,15 @@ bool playactive = false;
 bool storyactive = false;
 bool highscoreactive = false;
 bool gameon = false;
+bool gameover = false;
+
 int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername
 char playername[100];
+int PlayerScore = 0;
 
 /*
 A LOT OF THINGS TO BE INCLUDED HERE SUCH AS DEFINING SOME CONST. DEFINING STRUCTURES, DEFINING VARIABLES
 */
-
 // including bmp images
 char bg[10][40] = {
 	"backgrounds\\menu.bmp",	   // 0
@@ -32,7 +31,8 @@ char bg[10][40] = {
 	"backgrounds\\highscores.bmp", // 3
 	"backgrounds\\credit.bmp",	   // 4
 	"backgrounds\\htp.bmp",		   // 5
-	"backgrounds\\username.bmp"	   // 6
+	"backgrounds\\username.bmp",   // 6
+	"backgrounds\\gameover.bmp"    //7
 
 };
 
@@ -52,11 +52,15 @@ void MenuSetup();
 void menumousecontrol(int button, int state, int mx, int my);
 void backbuttonfunction(int button, int state, int mx, int my);
 void playernamemousecontrol(int button, int state, int mx, int my);
+void showhighscore();
+void modifyscoreboard();
+void maingame();
+
 
 void iDraw()
 {
 	iClear();
-	iShowBMP(0, 0, bg[GameState]);
+	iShowBMP(0, 0, bg[GameState]); //draw the appropriate game bg
 	if (GameState == 0)
 	{
 		soundbutton();
@@ -65,6 +69,15 @@ void iDraw()
 	{
 		iSetColor(0, 0, 0);
 		iText(300, 310, playername, GLUT_BITMAP_TIMES_ROMAN_24);
+	}
+	// highscore showing
+	if (GameState == 3)
+	{
+		showhighscore();
+	}
+	//when we are in main game window
+	if(GameState==1){
+		maingame();
 	}
 }
 
@@ -101,6 +114,7 @@ int ind = -1;
 
 void iKeyboard(unsigned char key)
 {
+	// taking name from user and storing it in playername array
 	if (GameState == 6)
 	{
 		if (ind != -1 && key == '\b')
@@ -165,6 +179,7 @@ void menumousecontrol(int button, int state, int mx, int my)
 	else if (mx >= 195 && mx <= 195 + buttonwidth && my >= 243 && my <= 243 + buttonheight)
 	{
 		GameState = 3;
+		showhighscore();
 		// highscores er window dekhabe
 	}
 
@@ -187,13 +202,82 @@ void menumousecontrol(int button, int state, int mx, int my)
 }
 void backbuttonfunction(int button, int state, int mx, int my)
 {
-	if (GameState > 1)
+	if (GameState > 1 && GameState!=7)
 	{
 		// back button clicked
 		if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
 		{
 			GameState = 0; // getting back to main menu
 		}
+	}
+}
+void modifyscoreboard()
+{
+	FILE *fptr;
+	char names[5][50]; // storing the name of the top scorers
+	int HighScores[5]; // storing their score in respective index
+	fptr = fopen("highscores.txt", "r");
+	int i = 0;
+	while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
+	{
+		i++;
+	} // now we have extracted score data from highscore file
+	fclose(fptr);
+	// now we will modify the leaderboard
+	int isdone = 0;
+	for (int i = 0; i < 5; i++)
+	{
+		if (isdone)
+			break;
+		if (PlayerScore >= HighScores[i])
+		{
+			isdone = 1;
+			for (int j = 4; j > i; j--)
+			{
+				strcpy(names[j], names[j - 1]);
+				HighScores[j] = HighScores[j - 1];
+			}
+			HighScores[i] = PlayerScore;
+			strcpy(names[i], playername);
+		}
+	}
+	// now we have our sorted arrays.. we will write the modified text in the highscore file
+	FILE *fptr2;
+	fptr2 = fopen("highscores.txt", "w");
+	for (int i = 0; i < 5; ++i)
+	{
+		fprintf(fptr2, "%s %d\n", names[i], HighScores[i]);
+	}
+}
+void maingame(){
+	PlayerScore = 1020; //temporarily setting this to check the highscore feature
+	
+	
+
+}
+void showhighscore()
+{
+	FILE *fptr;
+	char names[5][50]; // storing the name of the top scorers
+	int HighScores[5]; // storing their score in respective index
+	fptr = fopen("highscores.txt", "r");
+	int i = 0;
+	while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
+	{
+		i++;
+	} // now we have extracted score data from highscore file
+	fclose(fptr);
+	// showing the names
+	for (int i = 0; i < 5; i++)
+	{
+		iText(350, 175 + i * 55, names[4 - i], GLUT_BITMAP_TIMES_ROMAN_24);
+	}
+	// showing the scores
+	for (int i = 0; i < 5; i++)
+	{
+		char StrScore[10];
+		sprintf(StrScore, "%d", HighScores[4 - i]);
+		iText(650, 175 + i * 55, StrScore, GLUT_BITMAP_TIMES_ROMAN_24);
 	}
 }
 void playernamemousecontrol(int button, int state, int mx, int my)
@@ -206,6 +290,8 @@ void playernamemousecontrol(int button, int state, int mx, int my)
 			gameon = true;
 			soundcontrol();
 			printf("Player name is %s\n", playername);
+			maingame();
+			
 		}
 	}
 }

@@ -1,0 +1,5 @@
+karim 1200
+rahim 1111
+hamid 1000
+shakib 888
+michael 800
