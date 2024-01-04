@@ -3,23 +3,22 @@
 #include <windows.h>
 #include "mmsystem.h"
 #include <math.h>
-
+#include <string.h>
 // defining constants
 #define screenWidth 1080
 #define screenHeight 608
 #define buttonwidth 285
 #define buttonheight 64
 bool musicOn = true;
-bool playactive = false;
-bool storyactive = false;
-bool highscoreactive = false;
 bool gameon = false;
 bool gameover = false;
-
-int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername
+int t1;			   // timer 1 for changing color
+int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername  7- game over
 char playername[100];
 int PlayerScore = 0;
-
+int PlayerHealth = 100;
+int PlayerLife = 4;
+int r = 0, g = 0, b = 0;
 /*
 A LOT OF THINGS TO BE INCLUDED HERE SUCH AS DEFINING SOME CONST. DEFINING STRUCTURES, DEFINING VARIABLES
 */
@@ -32,18 +31,19 @@ char bg[10][40] = {
 	"backgrounds\\credit.bmp",	   // 4
 	"backgrounds\\htp.bmp",		   // 5
 	"backgrounds\\username.bmp",   // 6
-	"backgrounds\\gameover.bmp"    //7
+	"backgrounds\\gameover.bmp"	   // 7
 
 };
 
 // including music and sound fx files
-char music[5][40] = {"music\\menubgm.wav",	  // 0
-					 "music\\gamebgm.wav",	  // 1
-					 "music\\gunshot.wav",	  // 2
-					 "music\\explosion.wav"}; // 3
+char music[6][40] = {"music\\menubgm.wav",	 // 0
+					 "music\\gamebgm.wav",	 // 1
+					 "music\\gunshot.wav",	 // 2
+					 "music\\explosion.wav", // 3
+					 "music\\gameover.wav"}; // 4
 
 // including buttons
-char buttons[12][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
+char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
 
 // prototype of functions
 void soundbutton();
@@ -55,12 +55,15 @@ void playernamemousecontrol(int button, int state, int mx, int my);
 void showhighscore();
 void modifyscoreboard();
 void maingame();
-
-
+void scorebar();
+void healthbar();
+void scoreupdate();
+void healthupdate();
+void gameoverscreen();
 void iDraw()
 {
 	iClear();
-	iShowBMP(0, 0, bg[GameState]); //draw the appropriate game bg
+	iShowBMP(0, 0, bg[GameState]); // draw the appropriate game bg
 	if (GameState == 0)
 	{
 		soundbutton();
@@ -75,9 +78,14 @@ void iDraw()
 	{
 		showhighscore();
 	}
-	//when we are in main game window
-	if(GameState==1){
+	// when we are in main game window
+	if (GameState == 1)
+	{
 		maingame();
+	}
+	if (GameState == 7)
+	{
+		gameoverscreen();
 	}
 }
 
@@ -99,7 +107,15 @@ void iMouse(int button, int state, int mx, int my)
 		case 6:
 			playernamemousecontrol(button, state, mx, my);
 			break;
-
+		// this is temporary
+		case 1:
+			PlayerScore += 50;
+			break;
+		case 7:
+			// when we are in game over screen press any key to continue
+			GameState = 0; // going back to menu
+			soundcontrol();
+			break;
 		default:
 			backbuttonfunction(button, state, mx, my);
 			break;
@@ -107,6 +123,14 @@ void iMouse(int button, int state, int mx, int my)
 	}
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
+		if (GameState == 1)
+		{
+			// just a temporary system for testing health update
+			if (PlayerHealth != 0)
+			{
+				PlayerHealth -= 25;
+			}
+		}
 	}
 }
 // taking playername
@@ -127,6 +151,7 @@ void iKeyboard(unsigned char key)
 			GameState = 1;
 			gameon = true;
 			soundcontrol();
+			maingame();
 			printf("Player name is %s\n", playername);
 		}
 		else if (key != '\r')
@@ -136,7 +161,6 @@ void iKeyboard(unsigned char key)
 			ind++;
 		}
 	}
-	// place your codes for other keys here
 }
 
 /*
@@ -168,6 +192,12 @@ void menumousecontrol(int button, int state, int mx, int my)
 	// clicked play button
 	if (mx >= 195 && mx <= 195 + buttonwidth && my >= 403 && my <= 403 + buttonheight)
 	{
+		// initializing the values for playing again
+		PlayerHealth = 100;
+		PlayerScore = 0;
+		memset(playername, 0, sizeof(playername));
+		ind = -1;
+
 		GameState = 6;
 	}
 	// clicked story button
@@ -202,7 +232,7 @@ void menumousecontrol(int button, int state, int mx, int my)
 }
 void backbuttonfunction(int button, int state, int mx, int my)
 {
-	if (GameState > 1 && GameState!=7)
+	if (GameState > 1 && GameState != 7)
 	{
 		// back button clicked
 		if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
@@ -248,12 +278,44 @@ void modifyscoreboard()
 	{
 		fprintf(fptr2, "%s %d\n", names[i], HighScores[i]);
 	}
+	fclose(fptr2);
 }
-void maingame(){
-	PlayerScore = 1020; //temporarily setting this to check the highscore feature
-	
-	
 
+void scorebar()
+{
+	iSetColor(255, 255, 255);
+	iText(950, 580, "Score: ", GLUT_BITMAP_HELVETICA_18);
+	char score[10];
+	sprintf(score, "%d", PlayerScore);
+	iText(1015, 580, score, GLUT_BITMAP_HELVETICA_18);
+}
+void healthbar()
+{
+	iSetColor(255, 255, 255);
+	iText(950, 550, "Health: ", GLUT_BITMAP_HELVETICA_18);
+	iSetColor(255, 0, 0);
+	iRectangle(950, 530, 100, 10);
+	iSetColor(0, 250, 0);
+	iFilledRectangle(950, 530, PlayerHealth, 10);
+}
+
+void maingame()
+{
+	// called by idraw
+	//  in the main game section we will have score and life option in the corner;
+	scorebar();
+	healthbar();
+	// scoreupdate();
+	// healthupdate();  //will update them accordingly when needed.. currently wrote a demo update code in imouse founction
+	if (PlayerHealth == 0)
+	{
+		GameState = 7;
+		soundcontrol();
+		gameover = true;
+		gameon = false;
+
+		modifyscoreboard();
+	}
 }
 void showhighscore()
 {
@@ -273,12 +335,25 @@ void showhighscore()
 		iText(350, 175 + i * 55, names[4 - i], GLUT_BITMAP_TIMES_ROMAN_24);
 	}
 	// showing the scores
+	iSetColor(255, 255, 255);
 	for (int i = 0; i < 5; i++)
 	{
 		char StrScore[10];
 		sprintf(StrScore, "%d", HighScores[4 - i]);
 		iText(650, 175 + i * 55, StrScore, GLUT_BITMAP_TIMES_ROMAN_24);
 	}
+}
+
+void gameoverscreen()
+{
+
+	iResumeTimer(t1);
+	char score[10];
+	sprintf(score, "%d", PlayerScore);
+	iSetColor(255, 255, 255);
+	iText(618, 250, score, GLUT_BITMAP_TIMES_ROMAN_24);
+	iSetColor(r, g, b);
+	iText(400, 200, "Click anywhere to continue", GLUT_BITMAP_TIMES_ROMAN_24);
 }
 void playernamemousecontrol(int button, int state, int mx, int my)
 {
@@ -289,11 +364,17 @@ void playernamemousecontrol(int button, int state, int mx, int my)
 			GameState = 1;
 			gameon = true;
 			soundcontrol();
-			printf("Player name is %s\n", playername);
+
 			maingame();
-			
+			printf("Player name is %s\n", playername);
 		}
 	}
+}
+void colorchanger()
+{
+	r = rand() % 255;
+	g = rand() % 255;
+	b = rand() % 255;
 }
 
 void soundbutton()
@@ -314,6 +395,10 @@ void soundcontrol()
 		{
 			PlaySound(music[1], NULL, SND_LOOP | SND_ASYNC);
 		}
+		else if (GameState == 7)
+		{
+			PlaySound(music[4], NULL, SND_ASYNC);
+		}
 		else
 		{
 			PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
@@ -327,6 +412,8 @@ void soundcontrol()
 int main()
 {
 	// place your own initialization codes here.
+	t1 = iSetTimer(200, colorchanger);
+	iPauseTimer(t1);
 	PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
 	iInitialize(screenWidth, screenHeight, "Cosmic Guardians");
 	return 0;
