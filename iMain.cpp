@@ -1,4 +1,7 @@
 // including necessary header files.
+// to make the game challenging once in a while a clusture of asteroids will fall down with rather a speedy fashion we will
+// need some special weapon to destroy it or a handy amount of regular bullet.
+
 #include "iGraphics.h"
 #include <windows.h>
 #include "mmsystem.h"
@@ -41,6 +44,48 @@ char music[6][40] = {"music\\menubgm.wav",	 // 0
 					 "music\\gunshot.wav",	 // 2
 					 "music\\explosion.wav", // 3
 					 "music\\gameover.wav"}; // 4
+char ship[40][60] = {
+	"rocket\\ships\\0.bmp",
+	"rocket\\ships\\10.bmp",
+	"rocket\\ships\\20.bmp",
+	"rocket\\ships\\30.bmp",
+	"rocket\\ships\\40.bmp",
+	"rocket\\ships\\50.bmp",
+	"rocket\\ships\\60.bmp",
+	"rocket\\ships\\70.bmp",
+	"rocket\\ships\\80.bmp",
+	"rocket\\ships\\90.bmp",
+	"rocket\\ships\\100.bmp",
+	"rocket\\ships\\110.bmp",
+	"rocket\\ships\\120.bmp",
+	"rocket\\ships\\130.bmp",
+	"rocket\\ships\\140.bmp",
+	"rocket\\ships\\150.bmp",
+	"rocket\\ships\\160.bmp",
+	"rocket\\ships\\170.bmp",
+	"rocket\\ships\\180.bmp",
+	"rocket\\ships\\190.bmp",
+	"rocket\\ships\\200.bmp",
+	"rocket\\ships\\210.bmp",
+	"rocket\\ships\\220.bmp",
+	"rocket\\ships\\230.bmp",
+	"rocket\\ships\\240.bmp",
+	"rocket\\ships\\250.bmp",
+	"rocket\\ships\\260.bmp",
+	"rocket\\ships\\270.bmp",
+	"rocket\\ships\\280.bmp",
+	"rocket\\ships\\290.bmp",
+	"rocket\\ships\\300.bmp",
+	"rocket\\ships\\310.bmp",
+	"rocket\\ships\\320.bmp",
+	"rocket\\ships\\330.bmp",
+	"rocket\\ships\\340.bmp",
+	"rocket\\ships\\350.bmp"};
+// variables related to ship
+int ShipWidth;
+int ShipHeight;
+int ShipX = 500, ShipY = 100;
+int shipind = 0;
 
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
@@ -174,9 +219,27 @@ void iKeyboard(unsigned char key)
 	*/
 void iSpecialKeyboard(unsigned char key)
 {
-
-	if (key == GLUT_KEY_END)
+	// when we are in main game
+	if (GameState == 1)
 	{
+		if (key == GLUT_KEY_RIGHT)
+		{
+			if (shipind == 34)
+			{
+				shipind = 0;
+			} 						//changing the direction of the ship
+			else
+				shipind += 2;
+		}
+		else if (key == GLUT_KEY_LEFT)
+		{
+			if (shipind == 0)
+			{
+				shipind = 34;
+			}
+			else
+				shipind -= 2;
+		}
 	}
 }
 
@@ -305,6 +368,9 @@ void maingame()
 	//  in the main game section we will have score and life option in the corner;
 	scorebar();
 	healthbar();
+	// load ship
+	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
+
 	// scoreupdate();
 	// healthupdate();  //will update them accordingly when needed.. currently wrote a demo update code in imouse founction
 	if (PlayerHealth == 0)
