@@ -1,6 +1,6 @@
 #include "iGraphics.h"
-//#include "gl.h"
-// These two header files are necessary for playing music
+// #include "gl.h"
+//  These two header files are necessary for playing music
 #include "windows.h"
 #include "mmsystem.h"
 #include <math.h>

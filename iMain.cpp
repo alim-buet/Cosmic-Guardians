@@ -1,7 +1,7 @@
 // including necessary header files.
 // to make the game challenging once in a while a clusture of asteroids will fall down with rather a speedy fashion we will
 // need some special weapon to destroy it or a handy amount of regular bullet.
-
+// i have to change the image ofship because i dont like 'em
 #include "iGraphics.h"
 #include <windows.h>
 #include "mmsystem.h"
@@ -16,6 +16,7 @@ bool musicOn = true;
 bool gameon = false;
 bool gameover = false;
 int t1;			   // timer 1 for changing color
+int t2;			   // timer 2 is for animating the ship
 int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername  7- game over
 char playername[100];
 int PlayerScore = 0;
@@ -37,8 +38,6 @@ char bg[10][40] = {
 	"backgrounds\\gameover.bmp"	   // 7
 
 };
-
-// including music and sound fx files
 char music[6][40] = {"music\\menubgm.wav",	 // 0
 					 "music\\gamebgm.wav",	 // 1
 					 "music\\gunshot.wav",	 // 2
@@ -85,11 +84,15 @@ char ship[40][60] = {
 int ShipWidth;
 int ShipHeight;
 int ShipX = 500, ShipY = 100;
+int ShipVelocity = 0;
+int ShipMaxVelocity = 20;
+int ShipCurrentVelocity = 0;
+int ShipDeltaVelocity = 5;
 int shipind = 0;
 
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
-
+char bullet[3][60] = {"rocket\\bullet.bmp"};
 // prototype of functions
 void soundbutton();
 void soundcontrol();
@@ -105,6 +108,7 @@ void healthbar();
 void scoreupdate();
 void healthupdate();
 void gameoverscreen();
+void animateship();
 void iDraw()
 {
 	iClear();
@@ -126,6 +130,7 @@ void iDraw()
 	// when we are in main game window
 	if (GameState == 1)
 	{
+		iResumeTimer(t2);
 		maingame();
 	}
 	if (GameState == 7)
@@ -160,6 +165,7 @@ void iMouse(int button, int state, int mx, int my)
 			// when we are in game over screen press any key to continue
 			GameState = 0; // going back to menu
 			soundcontrol();
+			iPauseTimer(t1); // pausing the text blinker timer
 			break;
 		default:
 			backbuttonfunction(button, state, mx, my);
@@ -224,21 +230,40 @@ void iSpecialKeyboard(unsigned char key)
 	{
 		if (key == GLUT_KEY_RIGHT)
 		{
-			if (shipind == 34)
+			if (shipind == 35)
 			{
 				shipind = 0;
-			} 						//changing the direction of the ship
+
+			} // changing the direction of the ship
 			else
-				shipind += 2;
+			{
+				shipind += 1;
+			}
 		}
 		else if (key == GLUT_KEY_LEFT)
 		{
 			if (shipind == 0)
 			{
-				shipind = 34;
+				shipind = 35;
 			}
 			else
-				shipind -= 2;
+			{
+				shipind -= 1;
+			}
+		}
+		else if (key == GLUT_KEY_UP)
+		{
+			if (ShipCurrentVelocity < ShipMaxVelocity)
+			{
+				ShipCurrentVelocity += ShipDeltaVelocity;
+			}
+		}
+		else if (key == GLUT_KEY_DOWN)
+		{
+			if (ShipCurrentVelocity > 0)
+			{
+				ShipCurrentVelocity -= ShipDeltaVelocity;
+			}
 		}
 	}
 }
@@ -361,7 +386,13 @@ void healthbar()
 	iSetColor(0, 250, 0);
 	iFilledRectangle(950, 530, PlayerHealth, 10);
 }
+void animateship()
+{
+	double theta = ((90 - shipind * 10) * 3.1416) / 180.0;
 
+	ShipX += ((double)(ShipCurrentVelocity)*cos(theta));
+	ShipY += ((double)(ShipCurrentVelocity)*sin(theta));
+}
 void maingame()
 {
 	// called by idraw
@@ -373,6 +404,7 @@ void maingame()
 
 	// scoreupdate();
 	// healthupdate();  //will update them accordingly when needed.. currently wrote a demo update code in imouse founction
+
 	if (PlayerHealth == 0)
 	{
 		GameState = 7;
@@ -480,6 +512,8 @@ int main()
 	// place your own initialization codes here.
 	t1 = iSetTimer(200, colorchanger);
 	iPauseTimer(t1);
+	t2 = iSetTimer(10, animateship);
+	iPauseTimer(t2);
 	PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
 	iInitialize(screenWidth, screenHeight, "Cosmic Guardians");
 	return 0;

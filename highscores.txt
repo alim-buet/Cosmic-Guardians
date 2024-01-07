@@ -2,4 +2,4 @@ no1 1500
 alim 1250
 no2 1200
 karim 1200
-rahim 1111
+sylhet 1150
