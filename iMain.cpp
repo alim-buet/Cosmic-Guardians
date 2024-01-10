@@ -17,6 +17,7 @@ bool gameon = false;
 bool gameover = false;
 int t1;			   // timer 1 for changing color
 int t2;			   // timer 2 is for animating the ship
+int t3;			   // timer 3 is for animating the bullets
 int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername  7- game over
 char playername[100];
 int PlayerScore = 0;
@@ -81,18 +82,29 @@ char ship[40][60] = {
 	"rocket\\ships\\340.bmp",
 	"rocket\\ships\\350.bmp"};
 // variables related to ship
-int ShipWidth;
-int ShipHeight;
-double ShipX = 500, ShipY = 100;
+int ShipWidth = 125;
+int ShipHeight = 123;
+double ShipX = 500, ShipY = 260;
 int ShipVelocity = 0;
-int ShipMaxVelocity = 20;
+int ShipMaxVelocity = 15;
 int ShipCurrentVelocity = 0;
 int ShipDeltaVelocity = 5;
 int shipind = 0;
+// bullets
+typedef struct bullet
+{
+	double X, Y;
+	int velocity = 25;
+	double angle;
+	bool isActive = false;
+};
+// at a time we will deal with max 20 bullet theoritically
+bullet bullets[40];
+int bulletind = 0;
 
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
-char bullet[3][60] = {"rocket\\bullet.bmp"};
+char bulletimg[3][60] = {"rocket\\bullet.bmp"};
 // prototype of functions
 void soundbutton();
 void soundcontrol();
@@ -109,6 +121,8 @@ void scoreupdate();
 void healthupdate();
 void gameoverscreen();
 void animateship();
+void shootbullet();
+void resetgamedata();
 void iDraw()
 {
 	iClear();
@@ -212,6 +226,15 @@ void iKeyboard(unsigned char key)
 			ind++;
 		}
 	}
+	else if (GameState == 1)
+	{
+		if (key == ' ')
+		{
+			PlaySound(music[2], NULL, SND_FILENAME | SND_ASYNC);
+			shootbullet();
+			iResumeTimer(t3); // starting the bullet animation timer;
+		}
+	}
 }
 
 /*
@@ -227,7 +250,7 @@ void iSpecialKeyboard(unsigned char key)
 {
 	// when we are in main game
 	if (GameState == 1)
-	{
+	{ // changing the direction
 		if (key == GLUT_KEY_RIGHT)
 		{
 			if (shipind == 34)
@@ -251,6 +274,7 @@ void iSpecialKeyboard(unsigned char key)
 				shipind -= 2;
 			}
 		}
+		// giving thurst and drag
 		else if (key == GLUT_KEY_UP)
 		{
 			if (ShipCurrentVelocity < ShipMaxVelocity)
@@ -267,7 +291,24 @@ void iSpecialKeyboard(unsigned char key)
 		}
 	}
 }
+void shootbullet()
+{
+	if (bulletind == 20)
+	{
+		bulletind = 0;
+	}
+	bullets[bulletind].isActive = true;
+	bullets[bulletind].angle = ((90 - shipind * 10) * 3.1416) / 180.0;
+	bullets[bulletind].X = ShipX + 59 + cos(bullets[bulletind].angle) * 36.0;
+	bullets[bulletind].Y = ShipY + 60 + sin(bullets[bulletind].angle) * 36.0;
 
+	bulletind++;
+	// the ship should feel the reaction force
+	double theta = ((90 - shipind * 10) * 3.1416) / 180.0;
+
+	ShipX -= ((double)(1.5) * cos(theta));
+	ShipY -= ((double)(1.5) * sin(theta));
+}
 void MenuSetup()
 {
 	iShowBMP(0, 0, bg[0]);
@@ -388,10 +429,46 @@ void healthbar()
 }
 void animateship()
 {
+	if ((int)ShipX < 0)
+	{
+		ShipX = screenWidth;
+	}
+	else if ((int)ShipX > screenWidth)
+	{
+		ShipX = 0;
+	}
+	else if ((int)ShipY > screenHeight)
+	{
+		ShipY = 0;
+	}
+	else if ((int)ShipY < 0)
+	{
+		ShipY = screenHeight;
+	}
 	double theta = ((90 - shipind * 10) * 3.1416) / 180.0;
 
 	ShipX += ((double)(ShipCurrentVelocity)*cos(theta));
 	ShipY += ((double)(ShipCurrentVelocity)*sin(theta));
+}
+void animatebullet()
+{
+	for (int i = 0; i < 20; i++)
+	{
+		if (bullets[i].isActive)
+		{
+			if (bullets[i].X > screenWidth || bullets[i].Y > screenHeight)
+			{ // the bullet has traveled out of the screen
+				bullets[i].isActive = false;
+				bullets[i].velocity = ShipVelocity + 15;
+			}
+			else
+			{
+				bullets[i].X += cos(bullets[i].angle) * bullets[i].velocity;
+				bullets[i].Y += sin(bullets[i].angle) * bullets[i].velocity;
+				bullets[i].velocity += 3; // accelerating
+			}
+		}
+	}
 }
 void maingame()
 {
@@ -399,6 +476,14 @@ void maingame()
 	//  in the main game section we will have score and life option in the corner;
 	scorebar();
 	healthbar();
+	// loading the bullets
+	for (int i = 0; i < 20; i++)
+	{
+		if (bullets[i].isActive)
+		{
+			iShowBMP2(bullets[i].X, bullets[i].Y, bulletimg[0], 0);
+		}
+	}
 	// load ship
 	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
 
@@ -413,6 +498,18 @@ void maingame()
 		gameon = false;
 
 		modifyscoreboard();
+		// intialize the ship and rockets
+		resetgamedata();
+	}
+}
+void resetgamedata()
+{
+	ShipX = 500, ShipY = 260;
+	shipind = 0;
+	for (int i = 0; i < 25; i++)
+	{
+		bullets[i].isActive = false;
+		bullets[i].velocity = 25;
 	}
 }
 void showhighscore()
@@ -491,7 +588,7 @@ void soundcontrol()
 	{
 		if (GameState == 1)
 		{
-			PlaySound(music[1], NULL, SND_LOOP | SND_ASYNC);
+			PlaySound(0, 0, 0);
 		}
 		else if (GameState == 7)
 		{
@@ -514,6 +611,8 @@ int main()
 	iPauseTimer(t1);
 	t2 = iSetTimer(10, animateship);
 	iPauseTimer(t2);
+	t3 = iSetTimer(15, animatebullet);
+	iPauseTimer(t3);
 	PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
 	iInitialize(screenWidth, screenHeight, "Cosmic Guardians");
 	return 0;
