@@ -1,7 +1,7 @@
 // including necessary header files.
 // to make the game challenging once in a while a clusture of asteroids will fall down with rather a speedy fashion we will
 // need some special weapon to destroy it or a handy amount of regular bullet.
-// i have to change the image ofship because i dont like 'em
+// i have to change the image ofship because i dont like
 #include "iGraphics.h"
 #include <windows.h>
 #include "mmsystem.h"
@@ -83,7 +83,7 @@ char ship[40][60] = {
 // variables related to ship
 int ShipWidth;
 int ShipHeight;
-int ShipX = 500, ShipY = 100;
+double ShipX = 500, ShipY = 100;
 int ShipVelocity = 0;
 int ShipMaxVelocity = 20;
 int ShipCurrentVelocity = 0;
@@ -230,25 +230,25 @@ void iSpecialKeyboard(unsigned char key)
 	{
 		if (key == GLUT_KEY_RIGHT)
 		{
-			if (shipind == 35)
+			if (shipind == 34)
 			{
 				shipind = 0;
 
 			} // changing the direction of the ship
 			else
 			{
-				shipind += 1;
+				shipind += 2;
 			}
 		}
 		else if (key == GLUT_KEY_LEFT)
 		{
 			if (shipind == 0)
 			{
-				shipind = 35;
+				shipind = 34;
 			}
 			else
 			{
-				shipind -= 1;
+				shipind -= 2;
 			}
 		}
 		else if (key == GLUT_KEY_UP)
