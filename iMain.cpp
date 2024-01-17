@@ -1,7 +1,8 @@
-// including necessary header files.
-// to make the game challenging once in a while a clusture of asteroids will fall down with rather a speedy fashion we will
-// need some special weapon to destroy it or a handy amount of regular bullet.
-// i have to change the image ofship because i dont like
+
+// to make the game challenging once in a while a clusture of asteroids will fall down with rather a speedy fashion, we will
+// need some special weapon to destroy it or a handy amount of regular bullets.
+// okay so ajke timer banaisi asteroid er jonno, asteroid load koris,, next din oi asteroid gulu timer diye movement korabo+ idraw te iresume(t2) bar bar call hochhe eta fix korbo
+
 #include "iGraphics.h"
 #include <windows.h>
 #include "mmsystem.h"
@@ -18,6 +19,7 @@ bool gameover = false;
 int t1;			   // timer 1 for changing color
 int t2;			   // timer 2 is for animating the ship
 int t3;			   // timer 3 is for animating the bullets
+int t4;			   // timer 4 is for animating the asteroids
 int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername  7- game over
 char playername[100];
 int PlayerScore = 0;
@@ -94,17 +96,40 @@ int shipind = 0;
 typedef struct bullet
 {
 	double X, Y;
-	int velocity = 25;
+	int velocity = 30;
 	double angle;
 	bool isActive = false;
+};
+// asteroids and their characteristics
+typedef struct asteroid
+{
+	double X, Y;
+	int velocity = 5;
+	double direction;
+	bool isAlive = false;
+	int asteroidframe;
+	double slope; // slope toward the ship
 };
 // at a time we will deal with max 20 bullet theoritically
 bullet bullets[40];
 int bulletind = 0;
+asteroid asteroids[40];
+int asteroidind = 0;
+int maxasteroid = 5; // to store how many maximum asteroid to be in screen at a time
 
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
 char bulletimg[3][60] = {"rocket\\bullet.bmp"};
+char asteroidimg[10][60] = {
+	"asteroids\\Asteroid1.bmp",
+	"asteroids\\Asteroid2.bmp",
+	"asteroids\\Asteroid3.bmp",
+	"asteroids\\Asteroid4.bmp",
+	"asteroids\\Asteroid5.bmp",
+	"asteroids\\Asteroid6.bmp",
+	"asteroids\\Asteroid7.bmp",
+	"asteroids\\Asteroid8.bmp",
+};
 // prototype of functions
 void soundbutton();
 void soundcontrol();
@@ -123,6 +148,11 @@ void gameoverscreen();
 void animateship();
 void shootbullet();
 void resetgamedata();
+void InitializeAsteroids();
+void LoadAsteroids();
+void AnimateAsteroids();
+
+// prototype of functions ends here
 void iDraw()
 {
 	iClear();
@@ -144,7 +174,7 @@ void iDraw()
 	// when we are in main game window
 	if (GameState == 1)
 	{
-		iResumeTimer(t2);
+
 		maingame();
 	}
 	if (GameState == 7)
@@ -217,7 +247,11 @@ void iKeyboard(unsigned char key)
 			gameon = true;
 			soundcontrol();
 			maingame();
-			printf("Player name is %s\n", playername);
+			InitializeAsteroids();
+			iResumeTimer(t2); // starting animating the ship
+			iResumeTimer(t4); // starting animating the asteroids
+
+			// printf("Player name is %s\n", playername);
 		}
 		else if (key != '\r')
 		{
@@ -291,8 +325,18 @@ void iSpecialKeyboard(unsigned char key)
 		}
 	}
 }
+void InitializeAsteroids()
+{
+	for (int i = 0; i < maxasteroid; i++)
+	{
+		asteroids[i].isAlive = true;
+		asteroids[i].asteroidframe = rand() % 8;
+		LoadAsteroids();
+	}
+}
 void shootbullet()
 {
+	printf("Bullet ind %d\n", bulletind);
 	if (bulletind == 20)
 	{
 		bulletind = 0;
@@ -459,13 +503,12 @@ void animatebullet()
 			if (bullets[i].X > screenWidth || bullets[i].Y > screenHeight)
 			{ // the bullet has traveled out of the screen
 				bullets[i].isActive = false;
-				bullets[i].velocity = ShipVelocity + 15;
+				bullets[i].velocity = 30;
 			}
 			else
 			{
 				bullets[i].X += cos(bullets[i].angle) * bullets[i].velocity;
 				bullets[i].Y += sin(bullets[i].angle) * bullets[i].velocity;
-				bullets[i].velocity += 3; // accelerating
 			}
 		}
 	}
@@ -476,6 +519,9 @@ void maingame()
 	//  in the main game section we will have score and life option in the corner;
 	scorebar();
 	healthbar();
+	// loading the asteroids
+	LoadAsteroids();
+
 	// loading the bullets
 	for (int i = 0; i < 20; i++)
 	{
@@ -496,15 +542,72 @@ void maingame()
 		soundcontrol();
 		gameover = true;
 		gameon = false;
+		iPauseTimer(t2); // animation for ship is paused
+		iPauseTimer(t4); // animation for asteroid is paused
 
 		modifyscoreboard();
 		// intialize the ship and rockets
 		resetgamedata();
 	}
 }
+void AnimateAsteroids()
+{
+	for (int i = 0; i < maxasteroid; i++)
+	{
+		if (asteroids[i].isAlive)
+		{
+			asteroids[i].asteroidframe = (++asteroids[i].asteroidframe) % 8;
+			asteroids[i].X += 5;
+			asteroids[i].Y += 5;
+			if (asteroids[i].X > screenWidth)
+				asteroids[i].X = 0;
+			else if (asteroids[i].X < 0)
+				asteroids[i].Y = screenWidth;
+			else if (asteroids[i].Y > screenHeight)
+				asteroids[i].Y = 0;
+			else if (asteroids[i].Y < 0)
+				asteroids[i].Y = screenHeight;
+		}
+	}
+}
+void LoadAsteroids()
+{
+	for (int i = 0; i < maxasteroid; i++)
+	{
+		if (!asteroids[i].isAlive)
+		{
+			int x = rand() % 4;
+			if (x == 0)
+			{
+				asteroids[i].X = 0; // ******************
+				asteroids[i].Y = rand() % screenHeight;
+			}
+			else if (x == 1)
+			{
+				asteroids[i].X = rand() % screenWidth;
+				asteroids[i].Y = screenHeight;
+			}
+			else if (x == 2)
+			{
+				asteroids[i].X = screenWidth;
+				asteroids[i].Y = rand() % screenHeight;
+			}
+			else
+			{
+				asteroids[i].X = rand() % screenWidth;
+				asteroids[i].Y = 0; //**************
+			}
+			asteroids[i].isAlive = true;
+		}
+		// asteroids[i].slope = (ShipY-asteroids[i].Y);
+		iShowBMP2(asteroids[i].X, asteroids[i].Y, asteroidimg[asteroids[i].asteroidframe], 0);
+	}
+}
 void resetgamedata()
 {
-	ShipX = 500, ShipY = 260;
+	ShipX = 500, ShipY = 260, ShipVelocity = 0;
+	iPauseTimer(t2);
+	iPauseTimer(t4);
 	shipind = 0;
 	for (int i = 0; i < 25; i++)
 	{
@@ -559,8 +662,11 @@ void playernamemousecontrol(int button, int state, int mx, int my)
 			GameState = 1;
 			gameon = true;
 			soundcontrol();
+			iResumeTimer(t2);
+			iResumeTimer(t4);
 
 			maingame();
+			InitializeAsteroids();
 			printf("Player name is %s\n", playername);
 		}
 	}
@@ -613,6 +719,8 @@ int main()
 	iPauseTimer(t2);
 	t3 = iSetTimer(15, animatebullet);
 	iPauseTimer(t3);
+	t4 = iSetTimer(100, AnimateAsteroids);
+	iPauseTimer(t4);
 	PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
 	iInitialize(screenWidth, screenHeight, "Cosmic Guardians");
 	return 0;
