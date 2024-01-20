@@ -104,11 +104,13 @@ typedef struct bullet
 typedef struct asteroid
 {
 	double X, Y;
-	int velocity = 5;
+	int velocity = 85; // ekhane velocity mane asteroid er ship e pouchate koyta step lagbe setar measurement.. so er man komale ashol velocity barbe
 	double direction;
 	bool isAlive = false;
 	int asteroidframe;
 	double slope; // slope toward the ship
+	int targetX;
+	int targetY;
 };
 // at a time we will deal with max 20 bullet theoritically
 bullet bullets[40];
@@ -120,15 +122,39 @@ int maxasteroid = 5; // to store how many maximum asteroid to be in screen at a 
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
 char bulletimg[3][60] = {"rocket\\bullet.bmp"};
-char asteroidimg[10][60] = {
-	"asteroids\\Asteroid1.bmp",
-	"asteroids\\Asteroid2.bmp",
-	"asteroids\\Asteroid3.bmp",
-	"asteroids\\Asteroid4.bmp",
-	"asteroids\\Asteroid5.bmp",
-	"asteroids\\Asteroid6.bmp",
-	"asteroids\\Asteroid7.bmp",
-	"asteroids\\Asteroid8.bmp",
+char asteroidimg[50][60] = {
+	"asteroids\\tile001.bmp",
+	"asteroids\\tile002.bmp",
+	"asteroids\\tile003.bmp",
+	"asteroids\\tile004.bmp",
+	"asteroids\\tile005.bmp",
+	"asteroids\\tile006.bmp",
+	"asteroids\\tile007.bmp",
+	"asteroids\\tile008.bmp",
+	"asteroids\\tile009.bmp",
+	"asteroids\\tile010.bmp",
+	"asteroids\\tile011.bmp",
+	"asteroids\\tile012.bmp",
+	"asteroids\\tile013.bmp",
+	"asteroids\\tile014.bmp",
+	"asteroids\\tile015.bmp",
+	"asteroids\\tile016.bmp",
+	"asteroids\\tile017.bmp",
+	"asteroids\\tile018.bmp",
+	"asteroids\\tile019.bmp",
+	"asteroids\\tile020.bmp",
+	"asteroids\\tile021.bmp",
+	"asteroids\\tile022.bmp",
+	"asteroids\\tile023.bmp",
+	"asteroids\\tile024.bmp",
+	"asteroids\\tile025.bmp",
+	"asteroids\\tile026.bmp",
+	"asteroids\\tile027.bmp",
+	"asteroids\\tile028.bmp",
+	"asteroids\\tile029.bmp",
+	"asteroids\\tile030.bmp",
+	"asteroids\\tile031.bmp"
+
 };
 // prototype of functions
 void soundbutton();
@@ -519,7 +545,10 @@ void maingame()
 	//  in the main game section we will have score and life option in the corner;
 	scorebar();
 	healthbar();
+	// load ship
+	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
 	// loading the asteroids
+
 	LoadAsteroids();
 
 	// loading the bullets
@@ -530,8 +559,7 @@ void maingame()
 			iShowBMP2(bullets[i].X, bullets[i].Y, bulletimg[0], 0);
 		}
 	}
-	// load ship
-	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
+	
 
 	// scoreupdate();
 	// healthupdate();  //will update them accordingly when needed.. currently wrote a demo update code in imouse founction
@@ -549,6 +577,8 @@ void maingame()
 		// intialize the ship and rockets
 		resetgamedata();
 	}
+	// load ship
+	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
 }
 void AnimateAsteroids()
 {
@@ -556,9 +586,9 @@ void AnimateAsteroids()
 	{
 		if (asteroids[i].isAlive)
 		{
-			asteroids[i].asteroidframe = (++asteroids[i].asteroidframe) % 8;
-			asteroids[i].X += 5;
-			asteroids[i].Y += 5;
+			asteroids[i].asteroidframe = (++asteroids[i].asteroidframe) % 31;
+			asteroids[i].X += asteroids[i].targetX / asteroids[i].velocity;
+			asteroids[i].Y += asteroids[i].targetY / asteroids[i].velocity;
 			if (asteroids[i].X > screenWidth)
 				asteroids[i].X = 0;
 			else if (asteroids[i].X < 0)
@@ -598,14 +628,18 @@ void LoadAsteroids()
 				asteroids[i].Y = 0; //**************
 			}
 			asteroids[i].isAlive = true;
+			asteroids[i].targetX = (ShipX - 200) + rand() % 400 - asteroids[i].X;
+			asteroids[i].targetY = (ShipY - 200) + rand() % 400 - asteroids[i].Y;
 		}
-		// asteroids[i].slope = (ShipY-asteroids[i].Y);
+
+		// asteroids[i].slope = ((double)(targetY - asteroids[i].Y) / (targetX - asteroids[i].X));
 		iShowBMP2(asteroids[i].X, asteroids[i].Y, asteroidimg[asteroids[i].asteroidframe], 0);
 	}
 }
 void resetgamedata()
 {
 	ShipX = 500, ShipY = 260, ShipVelocity = 0;
+	ShipCurrentVelocity=0;
 	iPauseTimer(t2);
 	iPauseTimer(t4);
 	shipind = 0;
@@ -613,6 +647,9 @@ void resetgamedata()
 	{
 		bullets[i].isActive = false;
 		bullets[i].velocity = 25;
+	}
+	for(int i=0;i<30;i++){
+		asteroids[i].isAlive=false;
 	}
 }
 void showhighscore()
