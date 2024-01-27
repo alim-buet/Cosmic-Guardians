@@ -95,6 +95,7 @@ int shipind = 0;
 // bullets
 typedef struct bullet
 {
+
 	double X, Y;
 	int velocity = 30;
 	double angle;
@@ -104,13 +105,14 @@ typedef struct bullet
 typedef struct asteroid
 {
 	double X, Y;
-	int velocity = 85; // ekhane velocity mane asteroid er ship e pouchate koyta step lagbe setar measurement.. so er man komale ashol velocity barbe
+	double velocity = 100; // ekhane velocity mane asteroid er ship e pouchate koyta step lagbe setar measurement.. so er man komale ashol velocity barbe
 	double direction;
 	bool isAlive = false;
 	int asteroidframe;
 	double slope; // slope toward the ship
 	int targetX;
 	int targetY;
+
 };
 // at a time we will deal with max 20 bullet theoritically
 bullet bullets[40];
@@ -177,7 +179,11 @@ void resetgamedata();
 void InitializeAsteroids();
 void LoadAsteroids();
 void AnimateAsteroids();
-
+void collision();
+void ShipCollidedAsteroids();
+void ShowShipExplosion();
+void BulletHitCheck();
+void BulletHittedAsteroids();
 // prototype of functions ends here
 void iDraw()
 {
@@ -229,10 +235,12 @@ void iMouse(int button, int state, int mx, int my)
 			break;
 		// this is temporary
 		case 1:
-			PlayerScore += 50;
+			
 			break;
 		case 7:
 			// when we are in game over screen press any key to continue
+			// intialize the ship and rockets
+		    resetgamedata();
 			GameState = 0; // going back to menu
 			soundcontrol();
 			iPauseTimer(t1); // pausing the text blinker timer
@@ -246,11 +254,8 @@ void iMouse(int button, int state, int mx, int my)
 	{
 		if (GameState == 1)
 		{
-			// just a temporary system for testing health update
-			if (PlayerHealth != 0)
-			{
-				PlayerHealth -= 25;
-			}
+			
+			
 		}
 	}
 }
@@ -290,7 +295,7 @@ void iKeyboard(unsigned char key)
 	{
 		if (key == ' ')
 		{
-			PlaySound(music[2], NULL, SND_FILENAME | SND_ASYNC);
+
 			shootbullet();
 			iResumeTimer(t3); // starting the bullet animation timer;
 		}
@@ -363,6 +368,8 @@ void InitializeAsteroids()
 void shootbullet()
 {
 	printf("Bullet ind %d\n", bulletind);
+	PlaySound(music[2], NULL, SND_FILENAME | SND_ASYNC);
+
 	if (bulletind == 20)
 	{
 		bulletind = 0;
@@ -494,7 +501,12 @@ void healthbar()
 	iText(950, 550, "Health: ", GLUT_BITMAP_HELVETICA_18);
 	iSetColor(255, 0, 0);
 	iRectangle(950, 530, 100, 10);
-	iSetColor(0, 250, 0);
+	if(PlayerHealth>25){
+		iSetColor(0, 250, 0);
+
+	}
+	else iSetColor(255,0,0);
+	
 	iFilledRectangle(950, 530, PlayerHealth, 10);
 }
 void animateship()
@@ -539,6 +551,64 @@ void animatebullet()
 		}
 	}
 }
+
+
+
+void ShipCollidedAsteroids(){
+	PlayerHealth-=25;
+	//explosion 
+    //
+    //ShowShipExplosion();
+    ShipX = 500, ShipY = 260;
+
+
+}
+void collision(){
+	//finding out weather there is a collision between asteroids and ship or not
+	for(int as = 0;as<maxasteroid;as++){
+		//center of asteroid is asteroidX+40,asteroidY+40    redius of asteroid is 26
+		//center of ship is shipX63,shipY+61         radius is 38
+
+		double centertocenter = ((asteroids[as].X+40 - ShipX-63)*(asteroids[as].X+40 - ShipX-63) + (asteroids[as].Y+40 - ShipY-61)*(asteroids[as].Y+40 - ShipY-61));
+
+		if(centertocenter<((26+38)*(26+28)))
+		{
+			//there is indeed a collision
+			ShipCollidedAsteroids(); //decisions to make after a collision
+			asteroids[as].isAlive = false;
+
+
+		}
+
+
+	}
+}
+void BulletHitCheck(){
+	for(int as= 0;as<maxasteroid;as++){
+		for(int bul = 0;bul<20;bul++){
+				double centertocenter = ((asteroids[as].X+40 - bullets[bul].X-6)*(asteroids[as].X+40 - bullets[bul].X-6) + (asteroids[as].Y+40 - bullets[bul].Y-6)*(asteroids[as].Y+40 - bullets[bul].Y-6));
+				if(centertocenter<(26+6)*32)//the bullet is close enough for this perticular asteroids
+				{
+					bullets[bul].isActive = false;
+					asteroids[as].isAlive = false;
+					//decisions to make if a bullet hit the asteroid
+					BulletHittedAsteroids();
+
+				}
+
+		}
+
+	}
+
+}
+void BulletHittedAsteroids(){
+	PlayerScore+=10;
+	// explosion will be shown at that time
+
+
+	
+
+}
 void maingame()
 {
 	// called by idraw
@@ -547,9 +617,11 @@ void maingame()
 	healthbar();
 	// load ship
 	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
+	//check wether there is any ship-asteroid collision
+	collision();
 	// loading the asteroids
-
 	LoadAsteroids();
+	BulletHitCheck();
 
 	// loading the bullets
 	for (int i = 0; i < 20; i++)
@@ -574,8 +646,7 @@ void maingame()
 		iPauseTimer(t4); // animation for asteroid is paused
 
 		modifyscoreboard();
-		// intialize the ship and rockets
-		resetgamedata();
+		
 	}
 	// load ship
 	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
@@ -602,6 +673,7 @@ void AnimateAsteroids()
 }
 void LoadAsteroids()
 {
+	printf("asteroid load function is being called\n");
 	for (int i = 0; i < maxasteroid; i++)
 	{
 		if (!asteroids[i].isAlive)
@@ -609,7 +681,7 @@ void LoadAsteroids()
 			int x = rand() % 4;
 			if (x == 0)
 			{
-				asteroids[i].X = 0; // ******************
+				asteroids[i].X = -15; // ******************
 				asteroids[i].Y = rand() % screenHeight;
 			}
 			else if (x == 1)
@@ -625,11 +697,12 @@ void LoadAsteroids()
 			else
 			{
 				asteroids[i].X = rand() % screenWidth;
-				asteroids[i].Y = 0; //**************
+				asteroids[i].Y = -15; //**************
 			}
 			asteroids[i].isAlive = true;
 			asteroids[i].targetX = (ShipX - 200) + rand() % 400 - asteroids[i].X;
 			asteroids[i].targetY = (ShipY - 200) + rand() % 400 - asteroids[i].Y;
+			asteroids[i].velocity-= rand()%20;
 		}
 
 		// asteroids[i].slope = ((double)(targetY - asteroids[i].Y) / (targetX - asteroids[i].X));
@@ -732,10 +805,12 @@ void soundcontrol()
 		if (GameState == 1)
 		{
 			PlaySound(0, 0, 0);
+
 		}
 		else if (GameState == 7)
 		{
 			PlaySound(music[4], NULL, SND_ASYNC);
+			
 		}
 		else
 		{
