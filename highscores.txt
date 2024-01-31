@@ -1,5 +1,5 @@
-turzo 1950
-mahruf 1650
-no1 1500
-alim 1250
-no2 1200
+mahin 1010
+sdf 700
+maruf 620
+dsf 480
+sdf 440

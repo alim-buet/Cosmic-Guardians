@@ -88,14 +88,13 @@ int ShipWidth = 125;
 int ShipHeight = 123;
 double ShipX = 500, ShipY = 260;
 int ShipVelocity = 0;
-int ShipMaxVelocity = 15;
+int ShipMaxVelocity = 20;
 int ShipCurrentVelocity = 0;
 int ShipDeltaVelocity = 5;
 int shipind = 0;
 // bullets
 typedef struct bullet
 {
-
 	double X, Y;
 	int velocity = 30;
 	double angle;
@@ -105,21 +104,22 @@ typedef struct bullet
 typedef struct asteroid
 {
 	double X, Y;
-	double velocity = 100; // ekhane velocity mane asteroid er ship e pouchate koyta step lagbe setar measurement.. so er man komale ashol velocity barbe
+	double velocity; // ekhane velocity mane asteroid er ship e pouchate koyta step lagbe setar measurement.. so er man komale ashol velocity barbe
 	double direction;
 	bool isAlive = false;
 	int asteroidframe;
 	double slope; // slope toward the ship
-	int targetX;
-	int targetY;
-
+	double targetX;
+	double targetY;
 };
 // at a time we will deal with max 20 bullet theoritically
-bullet bullets[40];
+int maxbullet = 60;
+bullet bullets[60];
 int bulletind = 0;
 asteroid asteroids[40];
 int asteroidind = 0;
 int maxasteroid = 5; // to store how many maximum asteroid to be in screen at a time
+int asteroidsbasevelocity = 100; //we will change it to increase the diffiulity.. less value means higher velocity and vice versa
 
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
@@ -191,9 +191,9 @@ void iDraw()
 	iShowBMP(0, 0, bg[GameState]); // draw the appropriate game bg
 	if (GameState == 0)
 	{
-		soundbutton();
+		soundbutton(); // main menu sound button
 	}
-	if (GameState == 6)
+	if (GameState == 6) // showing the player name
 	{
 		iSetColor(0, 0, 0);
 		iText(300, 310, playername, GLUT_BITMAP_TIMES_ROMAN_24);
@@ -207,7 +207,7 @@ void iDraw()
 	if (GameState == 1)
 	{
 
-		maingame();
+		maingame(); // main game function will be called over and over again
 	}
 	if (GameState == 7)
 	{
@@ -223,40 +223,35 @@ void iMouse(int button, int state, int mx, int my)
 {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		printf("curren pos x: %d     y: %d\n", mx, my);
+		// printf("curren pos x: %d     y: %d\n", mx, my);
 		switch (GameState)
 		{
 			// when we are in main menu
 		case 0:
-			menumousecontrol(button, state, mx, my);
+			menumousecontrol(button, state, mx, my); // this function will handle the mouse clicks for the menu
 			break;
 		case 6:
 			playernamemousecontrol(button, state, mx, my);
 			break;
-		// this is temporary
 		case 1:
-			
+			// main games mouse events to be handled here
+
 			break;
 		case 7:
 			// when we are in game over screen press any key to continue
 			// intialize the ship and rockets
-		    resetgamedata();
+			resetgamedata();
 			GameState = 0; // going back to menu
 			soundcontrol();
 			iPauseTimer(t1); // pausing the text blinker timer
 			break;
 		default:
-			backbuttonfunction(button, state, mx, my);
+			backbuttonfunction(button, state, mx, my); // for any other regular window, we just need to handle the back buttons functionality
 			break;
 		}
 	}
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
-		if (GameState == 1)
-		{
-			
-			
-		}
 	}
 }
 // taking playername
@@ -272,13 +267,13 @@ void iKeyboard(unsigned char key)
 			ind--;
 			playername[ind + 1] = '\0';
 		}
-		else if (ind != -1 && key == '\r')
+		else if (ind != -1 && key == '\r') // enter pressed
 		{
 			GameState = 1;
 			gameon = true;
 			soundcontrol();
-			maingame();
-			InitializeAsteroids();
+			// maingame();
+			// InitializeAsteroids();
 			iResumeTimer(t2); // starting animating the ship
 			iResumeTimer(t4); // starting animating the asteroids
 
@@ -356,13 +351,31 @@ void iSpecialKeyboard(unsigned char key)
 		}
 	}
 }
-void InitializeAsteroids()
+// void InitializeAsteroids()
+// {
+// 	for (int i = 0; i < maxasteroid; i++)
+// 	{
+
+// 		LoadAsteroids();
+// 	}
+// }
+void animatebullet()
 {
-	for (int i = 0; i < maxasteroid; i++)
+	for (int i = 0; i < maxbullet; i++)
 	{
-		asteroids[i].isAlive = true;
-		asteroids[i].asteroidframe = rand() % 8;
-		LoadAsteroids();
+		if (bullets[i].isActive)
+		{
+			if (bullets[i].X > screenWidth || bullets[i].Y > screenHeight)
+			{ // the bullet has traveled out of the screen
+				bullets[i].isActive = false;
+				// bullets[i].velocity = 30;
+			}
+			else
+			{
+				bullets[i].X += cos(bullets[i].angle) * bullets[i].velocity;
+				bullets[i].Y += sin(bullets[i].angle) * bullets[i].velocity;
+			}
+		}
 	}
 }
 void shootbullet()
@@ -370,7 +383,7 @@ void shootbullet()
 	printf("Bullet ind %d\n", bulletind);
 	PlaySound(music[2], NULL, SND_FILENAME | SND_ASYNC);
 
-	if (bulletind == 20)
+	if (bulletind == maxbullet-1)
 	{
 		bulletind = 0;
 	}
@@ -501,12 +514,13 @@ void healthbar()
 	iText(950, 550, "Health: ", GLUT_BITMAP_HELVETICA_18);
 	iSetColor(255, 0, 0);
 	iRectangle(950, 530, 100, 10);
-	if(PlayerHealth>25){
+	if (PlayerHealth > 25)
+	{
 		iSetColor(0, 250, 0);
-
 	}
-	else iSetColor(255,0,0);
-	
+	else
+		iSetColor(255, 0, 0);
+
 	iFilledRectangle(950, 530, PlayerHealth, 10);
 }
 void animateship()
@@ -532,82 +546,61 @@ void animateship()
 	ShipX += ((double)(ShipCurrentVelocity)*cos(theta));
 	ShipY += ((double)(ShipCurrentVelocity)*sin(theta));
 }
-void animatebullet()
+
+
+void ShipCollidedAsteroids()
 {
-	for (int i = 0; i < 20; i++)
+	PlayerHealth -= 25;
+	// explosion
+	//
+	// ShowShipExplosion();
+	ShipX = 500, ShipY = 260;
+}
+void collision()
+{
+	// finding out weather there is a collision between asteroids and ship or not
+	for (int as = 0; as < maxasteroid; as++)
 	{
-		if (bullets[i].isActive)
+		// center of asteroid is asteroidX+40,asteroidY+40    redius of asteroid is 26
+		// center of ship is shipX63,shipY+61         radius is 38
+
+		double centertocenter = ((asteroids[as].X + 40 - ShipX - 63) * (asteroids[as].X + 40 - ShipX - 63) + (asteroids[as].Y + 40 - ShipY - 61) * (asteroids[as].Y + 40 - ShipY - 61));
+
+		if (centertocenter < ((26 + 38) * (26 + 28)))
 		{
-			if (bullets[i].X > screenWidth || bullets[i].Y > screenHeight)
-			{ // the bullet has traveled out of the screen
-				bullets[i].isActive = false;
-				bullets[i].velocity = 30;
-			}
-			else
-			{
-				bullets[i].X += cos(bullets[i].angle) * bullets[i].velocity;
-				bullets[i].Y += sin(bullets[i].angle) * bullets[i].velocity;
-			}
-		}
-	}
-}
-
-
-
-void ShipCollidedAsteroids(){
-	PlayerHealth-=25;
-	//explosion 
-    //
-    //ShowShipExplosion();
-    ShipX = 500, ShipY = 260;
-
-
-}
-void collision(){
-	//finding out weather there is a collision between asteroids and ship or not
-	for(int as = 0;as<maxasteroid;as++){
-		//center of asteroid is asteroidX+40,asteroidY+40    redius of asteroid is 26
-		//center of ship is shipX63,shipY+61         radius is 38
-
-		double centertocenter = ((asteroids[as].X+40 - ShipX-63)*(asteroids[as].X+40 - ShipX-63) + (asteroids[as].Y+40 - ShipY-61)*(asteroids[as].Y+40 - ShipY-61));
-
-		if(centertocenter<((26+38)*(26+28)))
-		{
-			//there is indeed a collision
-			ShipCollidedAsteroids(); //decisions to make after a collision
+			// there is indeed a collision
+			ShipCollidedAsteroids(); // decisions to make after a collision
 			asteroids[as].isAlive = false;
-
-
 		}
-
-
 	}
 }
-void BulletHitCheck(){
-	for(int as= 0;as<maxasteroid;as++){
-		for(int bul = 0;bul<20;bul++){
-				double centertocenter = ((asteroids[as].X+40 - bullets[bul].X-6)*(asteroids[as].X+40 - bullets[bul].X-6) + (asteroids[as].Y+40 - bullets[bul].Y-6)*(asteroids[as].Y+40 - bullets[bul].Y-6));
-				if(centertocenter<(26+6)*32)//the bullet is close enough for this perticular asteroids
-				{
+void BulletHitCheck()
+{
+	for (int as = 0; as < maxasteroid; as++)
+	{
+		for (int bul = 0; bul < maxbullet; bul++)
+		{
+			double centertocenter = ((asteroids[as].X + 40 - bullets[bul].X - 6) * (asteroids[as].X + 40 - bullets[bul].X - 6) + (asteroids[as].Y + 40 - bullets[bul].Y - 6) * (asteroids[as].Y + 40 - bullets[bul].Y - 6));
+			if (centertocenter < (26 + 6) * 32) // the bullet is close enough for this perticular asteroids
+			{
+				if(bullets[bul].isActive && asteroids[as].isAlive){
 					bullets[bul].isActive = false;
-					asteroids[as].isAlive = false;
-					//decisions to make if a bullet hit the asteroid
-					BulletHittedAsteroids();
+				    asteroids[as].isAlive = false;
 
+				// decisions to make if a bullet hit the asteroid
+				    BulletHittedAsteroids();
 				}
-
+				
+			}
 		}
-
 	}
-
 }
-void BulletHittedAsteroids(){
-	PlayerScore+=10;
+void BulletHittedAsteroids()
+{
+	PlayerScore += 10;
+	maxasteroid = 5+ (PlayerScore)/200 ; //the number of asteroids on the screen will increase by one for every 200 points scored
+	asteroidsbasevelocity = 100 - (PlayerScore)/200;  //velocity of the asteroids will increase to.. may need some tweaking here
 	// explosion will be shown at that time
-
-
-	
-
 }
 void maingame()
 {
@@ -617,21 +610,20 @@ void maingame()
 	healthbar();
 	// load ship
 	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
-	//check wether there is any ship-asteroid collision
-	collision();
+	// check wether there is any ship-asteroid collision
+	collision(); // collision checker
 	// loading the asteroids
 	LoadAsteroids();
 	BulletHitCheck();
 
 	// loading the bullets
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < maxbullet; i++)
 	{
 		if (bullets[i].isActive)
 		{
 			iShowBMP2(bullets[i].X, bullets[i].Y, bulletimg[0], 0);
 		}
 	}
-	
 
 	// scoreupdate();
 	// healthupdate();  //will update them accordingly when needed.. currently wrote a demo update code in imouse founction
@@ -646,7 +638,6 @@ void maingame()
 		iPauseTimer(t4); // animation for asteroid is paused
 
 		modifyscoreboard();
-		
 	}
 	// load ship
 	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
@@ -660,28 +651,24 @@ void AnimateAsteroids()
 			asteroids[i].asteroidframe = (++asteroids[i].asteroidframe) % 31;
 			asteroids[i].X += asteroids[i].targetX / asteroids[i].velocity;
 			asteroids[i].Y += asteroids[i].targetY / asteroids[i].velocity;
-			if (asteroids[i].X > screenWidth)
-				asteroids[i].X = 0;
-			else if (asteroids[i].X < 0)
-				asteroids[i].Y = screenWidth;
-			else if (asteroids[i].Y > screenHeight)
-				asteroids[i].Y = 0;
-			else if (asteroids[i].Y < 0)
-				asteroids[i].Y = screenHeight;
+			if (asteroids[i].X > screenWidth || asteroids[i].X < 0 || asteroids[i].Y > screenHeight || asteroids[i].Y < 0) // if asteroid go beyond the screen
+				asteroids[i].isAlive = false;
+
 		}
 	}
 }
 void LoadAsteroids()
 {
-	printf("asteroid load function is being called\n");
+	// printf("asteroid load function is being called\n");
 	for (int i = 0; i < maxasteroid; i++)
 	{
 		if (!asteroids[i].isAlive)
 		{
+
 			int x = rand() % 4;
 			if (x == 0)
 			{
-				asteroids[i].X = -15; // ******************
+				asteroids[i].X = 0; // ******************
 				asteroids[i].Y = rand() % screenHeight;
 			}
 			else if (x == 1)
@@ -697,12 +684,13 @@ void LoadAsteroids()
 			else
 			{
 				asteroids[i].X = rand() % screenWidth;
-				asteroids[i].Y = -15; //**************
+				asteroids[i].Y = 0; //**************
 			}
 			asteroids[i].isAlive = true;
+			asteroids[i].asteroidframe = rand() % 30;
 			asteroids[i].targetX = (ShipX - 200) + rand() % 400 - asteroids[i].X;
 			asteroids[i].targetY = (ShipY - 200) + rand() % 400 - asteroids[i].Y;
-			asteroids[i].velocity-= rand()%20;
+			asteroids[i].velocity=100- rand() % 10;
 		}
 
 		// asteroids[i].slope = ((double)(targetY - asteroids[i].Y) / (targetX - asteroids[i].X));
@@ -712,17 +700,20 @@ void LoadAsteroids()
 void resetgamedata()
 {
 	ShipX = 500, ShipY = 260, ShipVelocity = 0;
-	ShipCurrentVelocity=0;
+	ShipCurrentVelocity = 0;
 	iPauseTimer(t2);
 	iPauseTimer(t4);
 	shipind = 0;
+	bulletind =0;
+	ind = -1; // the player name index.
 	for (int i = 0; i < 25; i++)
 	{
 		bullets[i].isActive = false;
 		bullets[i].velocity = 25;
 	}
-	for(int i=0;i<30;i++){
-		asteroids[i].isAlive=false;
+	for (int i = 0; i < 30; i++)
+	{
+		asteroids[i].isAlive = false;
 	}
 }
 void showhighscore()
@@ -775,8 +766,8 @@ void playernamemousecontrol(int button, int state, int mx, int my)
 			iResumeTimer(t2);
 			iResumeTimer(t4);
 
-			maingame();
-			InitializeAsteroids();
+			// maingame();
+			// InitializeAsteroids();
 			printf("Player name is %s\n", playername);
 		}
 	}
@@ -805,12 +796,10 @@ void soundcontrol()
 		if (GameState == 1)
 		{
 			PlaySound(0, 0, 0);
-
 		}
 		else if (GameState == 7)
 		{
 			PlaySound(music[4], NULL, SND_ASYNC);
-			
 		}
 		else
 		{
