@@ -20,6 +20,7 @@ int t1;			   // timer 1 for changing color
 int t2;			   // timer 2 is for animating the ship
 int t3;			   // timer 3 is for animating the bullets
 int t4;			   // timer 4 is for animating the asteroids
+int texp;		   // this timer will control the animations of explosions
 int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername  7- game over
 char playername[100];
 int PlayerScore = 0;
@@ -83,6 +84,17 @@ char ship[40][60] = {
 	"rocket\\ships\\330.bmp",
 	"rocket\\ships\\340.bmp",
 	"rocket\\ships\\350.bmp"};
+char explosionimg[10][40] = {"explosion\\1.bmp",
+							 "explosion\\2.bmp",
+							 "explosion\\3.bmp",
+							 "explosion\\4.bmp",
+							 "explosion\\5.bmp",
+							 "explosion\\6.bmp",
+							 "explosion\\7.bmp"};
+int explosionimgind = 0;
+int impactX, impactY;
+bool isExploding = false;
+
 // variables related to ship
 int ShipWidth = 125;
 int ShipHeight = 123;
@@ -118,8 +130,8 @@ bullet bullets[60];
 int bulletind = 0;
 asteroid asteroids[40];
 int asteroidind = 0;
-int maxasteroid = 5; // to store how many maximum asteroid to be in screen at a time
-int asteroidsbasevelocity = 100; //we will change it to increase the diffiulity.. less value means higher velocity and vice versa
+int maxasteroid = 5;			 // to store how many maximum asteroid to be in screen at a time
+int asteroidsbasevelocity = 100; // we will change it to increase the diffiulity.. less value means higher velocity and vice versa
 
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
@@ -184,11 +196,13 @@ void ShipCollidedAsteroids();
 void ShowShipExplosion();
 void BulletHitCheck();
 void BulletHittedAsteroids();
+void AnimateExplosion();
 // prototype of functions ends here
 void iDraw()
 {
 	iClear();
 	iShowBMP(0, 0, bg[GameState]); // draw the appropriate game bg
+
 	if (GameState == 0)
 	{
 		soundbutton(); // main menu sound button
@@ -383,7 +397,7 @@ void shootbullet()
 	printf("Bullet ind %d\n", bulletind);
 	PlaySound(music[2], NULL, SND_FILENAME | SND_ASYNC);
 
-	if (bulletind == maxbullet-1)
+	if (bulletind == maxbullet - 1)
 	{
 		bulletind = 0;
 	}
@@ -547,7 +561,6 @@ void animateship()
 	ShipY += ((double)(ShipCurrentVelocity)*sin(theta));
 }
 
-
 void ShipCollidedAsteroids()
 {
 	PlayerHealth -= 25;
@@ -566,6 +579,7 @@ void collision()
 
 		double centertocenter = ((asteroids[as].X + 40 - ShipX - 63) * (asteroids[as].X + 40 - ShipX - 63) + (asteroids[as].Y + 40 - ShipY - 61) * (asteroids[as].Y + 40 - ShipY - 61));
 
+
 		if (centertocenter < ((26 + 38) * (26 + 28)))
 		{
 			// there is indeed a collision
@@ -583,24 +597,41 @@ void BulletHitCheck()
 			double centertocenter = ((asteroids[as].X + 40 - bullets[bul].X - 6) * (asteroids[as].X + 40 - bullets[bul].X - 6) + (asteroids[as].Y + 40 - bullets[bul].Y - 6) * (asteroids[as].Y + 40 - bullets[bul].Y - 6));
 			if (centertocenter < (26 + 6) * 32) // the bullet is close enough for this perticular asteroids
 			{
-				if(bullets[bul].isActive && asteroids[as].isAlive){
+				if (bullets[bul].isActive && asteroids[as].isAlive)
+				{
 					bullets[bul].isActive = false;
-				    asteroids[as].isAlive = false;
-
-				// decisions to make if a bullet hit the asteroid
-				    BulletHittedAsteroids();
+					asteroids[as].isAlive = false;
+					explosionimgind = 0;
+					isExploding = true;
+					// decisions to make if a bullet hit the asteroid
+					impactX = asteroids[as].X;
+					impactY = asteroids[as].Y;
+					BulletHittedAsteroids();
 				}
-				
 			}
 		}
+	}
+}
+void AnimateExplosion()
+{
+	// printf("Explosiond is going on explosion img ind %d",explosionimgind);
+	if (explosionimgind == 7)
+	{
+		iPauseTimer(texp);
+	}
+	else
+	{
+
+		explosionimgind++;
 	}
 }
 void BulletHittedAsteroids()
 {
 	PlayerScore += 10;
-	maxasteroid = 5+ (PlayerScore)/200 ; //the number of asteroids on the screen will increase by one for every 200 points scored
-	asteroidsbasevelocity = 100 - (PlayerScore)/200;  //velocity of the asteroids will increase to.. may need some tweaking here
+	maxasteroid = 5 + (PlayerScore) / 200;			   // the number of asteroids on the screen will increase by one for every 200 points scored
+	asteroidsbasevelocity = 100 - (PlayerScore) / 200; // velocity of the asteroids will increase to.. may need some tweaking here
 	// explosion will be shown at that time
+	iResumeTimer(texp);
 }
 void maingame()
 {
@@ -624,6 +655,11 @@ void maingame()
 			iShowBMP2(bullets[i].X, bullets[i].Y, bulletimg[0], 0);
 		}
 	}
+	// showing explosion with appropriate conditions
+	if (explosionimgind == 7)
+		isExploding = false;
+	if (isExploding) // meaning there is an explosion going on
+		iShowBMP2(impactX, impactY, explosionimg[explosionimgind], 0);
 
 	// scoreupdate();
 	// healthupdate();  //will update them accordingly when needed.. currently wrote a demo update code in imouse founction
@@ -653,7 +689,6 @@ void AnimateAsteroids()
 			asteroids[i].Y += asteroids[i].targetY / asteroids[i].velocity;
 			if (asteroids[i].X > screenWidth || asteroids[i].X < 0 || asteroids[i].Y > screenHeight || asteroids[i].Y < 0) // if asteroid go beyond the screen
 				asteroids[i].isAlive = false;
-
 		}
 	}
 }
@@ -690,7 +725,7 @@ void LoadAsteroids()
 			asteroids[i].asteroidframe = rand() % 30;
 			asteroids[i].targetX = (ShipX - 200) + rand() % 400 - asteroids[i].X;
 			asteroids[i].targetY = (ShipY - 200) + rand() % 400 - asteroids[i].Y;
-			asteroids[i].velocity=100- rand() % 10;
+			asteroids[i].velocity = 100 - rand() % 10;
 		}
 
 		// asteroids[i].slope = ((double)(targetY - asteroids[i].Y) / (targetX - asteroids[i].X));
@@ -704,7 +739,7 @@ void resetgamedata()
 	iPauseTimer(t2);
 	iPauseTimer(t4);
 	shipind = 0;
-	bulletind =0;
+	bulletind = 0;
 	ind = -1; // the player name index.
 	for (int i = 0; i < 25; i++)
 	{
@@ -822,6 +857,9 @@ int main()
 	iPauseTimer(t3);
 	t4 = iSetTimer(100, AnimateAsteroids);
 	iPauseTimer(t4);
+	texp = iSetTimer(1, AnimateExplosion);
+	iPauseTimer(texp);
+
 	PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
 	iInitialize(screenWidth, screenHeight, "Cosmic Guardians");
 	return 0;
