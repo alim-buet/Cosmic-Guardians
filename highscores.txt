@@ -1,5 +1,5 @@
-sdf 3390
-alim 1910
-chigumbura 1910
-alim 1760
-sdf 1500
+manik 960
+messi 50
+ronaldo 40
+neymar 20
+mujib 10

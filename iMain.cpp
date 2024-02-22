@@ -106,7 +106,7 @@ int shipind = 0;
 typedef struct bullet
 {
 	double X, Y;
-	
+
 	int velocity = 30;
 	double angle;
 	bool isActive = false;
@@ -129,7 +129,7 @@ bullet bullets[60];
 int bulletind = 0;
 asteroid asteroids[40];
 int asteroidind = 0;
-int maxasteroid = 5;			 // to store how many maximum asteroid to be in screen at a time
+int maxasteroid = 5;			// to store how many maximum asteroid to be in screen at a time
 int asteroidsbasevelocity = 70; // we will change it to increase the diffiulity.. less value means higher velocity and vice versa
 // including buttons
 char buttons[5][60] = {"buttons\\sound off.bmp", "buttons\\sound on.bmp"};
@@ -165,8 +165,7 @@ char asteroidimg[50][60] = {
 	"asteroids\\tile028.bmp",
 	"asteroids\\tile029.bmp",
 	"asteroids\\tile030.bmp",
-	"asteroids\\tile031.bmp"
-};
+	"asteroids\\tile031.bmp"};
 // prototype of functions
 void soundbutton();
 void soundcontrol();
@@ -258,6 +257,7 @@ void iMouse(int button, int state, int mx, int my)
 			backbuttonfunction(button, state, mx, my); // for any other regular window, we just need to handle the back buttons functionality
 			break;
 		}
+
 	}
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
@@ -374,11 +374,11 @@ void animatebullet()
 }
 void shootbullet()
 {
-	//printf("Bullet ind %d\n", bulletind);
-	if(!isExploding){
+	// printf("Bullet ind %d\n", bulletind);
+	if (!isExploding)
+	{
 		PlaySound(music[2], NULL, SND_FILENAME | SND_ASYNC);
 	}
-	
 
 	if (bulletind == maxbullet - 1)
 	{
@@ -558,7 +558,6 @@ void collision()
 
 		double centertocenter = ((asteroids[as].X + 40 - ShipX - 63) * (asteroids[as].X + 40 - ShipX - 63) + (asteroids[as].Y + 40 - ShipY - 61) * (asteroids[as].Y + 40 - ShipY - 61));
 
-
 		if (centertocenter < ((26 + 40) * (26 + 30)))
 		{
 			// there is indeed a collision
@@ -607,16 +606,15 @@ void AnimateExplosion()
 void BulletHittedAsteroids()
 {
 	PlayerScore += 10;
-	maxasteroid = 5 + (PlayerScore) / 200;			   // the number of asteroids on the screen will increase by one for every 200 points scored
-	if(asteroidsbasevelocity>=30){
-			asteroidsbasevelocity = 70- ((PlayerScore) / 200)*5; // velocity of the asteroids will increase to.. may need some tweaking here
-
-
+	maxasteroid = 5 + (PlayerScore) / 200; // the number of asteroids on the screen will increase by one for every 200 points scored
+	if (asteroidsbasevelocity >= 30)
+	{
+		asteroidsbasevelocity = 70 - ((PlayerScore) / 200) * 5; // velocity of the asteroids will increase to.. may need some tweaking here
 	}
 	// explosion will be shown at that time
 	iResumeTimer(texp);
-	//explosion sound will be played
-	PlaySound(music[3],NULL, SND_ASYNC);
+	// explosion sound will be played
+	PlaySound(music[3], NULL, SND_ASYNC);
 }
 void maingame()
 {
@@ -779,6 +777,12 @@ void playernamemousecontrol(int button, int state, int mx, int my)
 			iResumeTimer(t4);
 			printf("Player name is %s\n", playername);
 		}
+	}
+	else if(mx>=16 && mx<=134 && my>=545 && my<= 592){ //back button clicked
+		GameState = 0;
+		ind = -1; // the player name index.
+
+
 	}
 }
 void colorchanger()
