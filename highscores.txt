@@ -1,5 +1,5 @@
-mahin 1010
-alim 810
-turzo 800
-sdf 700
-maruf 620
+sdf 3390
+alim 1910
+chigumbura 1910
+alim 1760
+sdf 1500
