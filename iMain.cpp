@@ -30,15 +30,18 @@ int r = 0, g = 0, b = 0;
 A LOT OF THINGS TO BE INCLUDED HERE SUCH AS DEFINING SOME CONST. DEFINING STRUCTURES, DEFINING VARIABLES
 */
 // including bmp images
-char bg[10][40] = {
+char bg[15][40] = {
 	"backgrounds\\menu.bmp",	   // 0
 	"backgrounds\\play.bmp",	   // 1
-	"backgrounds\\story.bmp",	   // 2
+	"backgrounds\\story1.bmp",	   // 2
+	
 	"backgrounds\\highscores.bmp", // 3
 	"backgrounds\\credit.bmp",	   // 4
 	"backgrounds\\htp.bmp",		   // 5
 	"backgrounds\\username.bmp",   // 6
-	"backgrounds\\gameover.bmp"	   // 7
+	"backgrounds\\gameover.bmp"	,   // 7
+	"backgrounds\\story2.bmp",	   // 8
+	"backgrounds\\story3.bmp",	   // 9
 
 };
 char music[6][40] = {"music\\menubgm.wav",	 // 0
@@ -245,6 +248,17 @@ void iMouse(int button, int state, int mx, int my)
 			// main games mouse events to be handled here
 
 			break;
+		case 2:
+			
+			//story r bhinno page navigation
+			if(mx>460 && mx<520 && my>28 && my<88) GameState = 2;
+			else if(mx>522 && mx<582 && my>28 && my<88) GameState = 8;
+			else if(mx>584 && mx<644 && my>28 && my<88) GameState = 9;
+			else if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
+				{
+			GameState = 0; // getting back to main menu
+				}
+			break;
 		case 7:
 			// when we are in game over screen press any key to continue
 			// intialize the ship and rockets
@@ -252,6 +266,26 @@ void iMouse(int button, int state, int mx, int my)
 			GameState = 0; // going back to menu
 			soundcontrol();
 			iPauseTimer(t1); // pausing the text blinker timer
+			break;
+		case 8:
+			//story r bhinno page navigation
+			if(mx>460 && mx<520 && my>28 && my<88) GameState = 2;
+			else if(mx>522 && mx<582 && my>28 && my<88) GameState = 8;
+			else if(mx>584 && mx<644 && my>28 && my<88) GameState = 9;
+			else if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
+				{
+			GameState = 0; // getting back to main menu
+				}
+			break;
+		case 9:
+			//story r bhinno page navigation
+			if(mx>460 && mx<520 && my>28 && my<88) GameState = 2;
+			else if(mx>522 && mx<582 && my>28 && my<88) GameState = 8;
+			else if(mx>584 && mx<644 && my>28 && my<88) GameState = 9;
+			else if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
+				{
+			GameState = 0; // getting back to main menu
+				}
 			break;
 		default:
 			backbuttonfunction(button, state, mx, my); // for any other regular window, we just need to handle the back buttons functionality
@@ -403,8 +437,8 @@ void MenuSetup()
 }
 void menumousecontrol(int button, int state, int mx, int my)
 {
-	// 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- name input
-	// clicked play button
+	// 0-main menu  1-game   2-story1    3- high score  4-credit 5-how to play 6- name input 8-story2  9-story3
+	// clicked play button 
 	if (mx >= 195 && mx <= 195 + buttonwidth && my >= 403 && my <= 403 + buttonheight)
 	{
 		// initializing the values for playing again
@@ -420,6 +454,7 @@ void menumousecontrol(int button, int state, int mx, int my)
 	{
 		GameState = 2;
 	}
+
 	// clicked highscore button
 	else if (mx >= 195 && mx <= 195 + buttonwidth && my >= 243 && my <= 243 + buttonheight)
 	{
