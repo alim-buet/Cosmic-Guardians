@@ -1,7 +1,3 @@
-
-// to make the game challenging once in a while a clusture of asteroids will fall down with rather a speedy fashion, we will
-// need some special weapon to destroy it or a handy amount of regular bullets.
-// okay so ajke timer banaisi asteroid er jonno, asteroid load koris,, next din oi asteroid gulu timer diye movement korabo+ idraw te iresume(t2) bar bar call hochhe eta fix korbo
 #include "iGraphics.h"
 #include <windows.h>
 #include "mmsystem.h"
@@ -20,35 +16,35 @@ int t2;			   // timer 2 is for animating the ship
 int t3;			   // timer 3 is for animating the bullets
 int t4;			   // timer 4 is for animating the asteroids
 int texp;		   // this timer will control the animations of explosions
+int twave;         // this timer will animate and control the functionality of annihilation wave
 int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername  7- game over
 char playername[100];
 int PlayerScore = 0;
 int PlayerHealth = 100;
 int PlayerLife = 4;
 int r = 0, g = 0, b = 0;
-/*
-A LOT OF THINGS TO BE INCLUDED HERE SUCH AS DEFINING SOME CONST. DEFINING STRUCTURES, DEFINING VARIABLES
-*/
 // including bmp images
 char bg[15][40] = {
-	"backgrounds\\menu.bmp",	   // 0
-	"backgrounds\\play.bmp",	   // 1
-	"backgrounds\\story1.bmp",	   // 2
-	
+	"backgrounds\\menu.bmp",   // 0
+	"backgrounds\\play.bmp",   // 1
+	"backgrounds\\story1.bmp", // 2
+
 	"backgrounds\\highscores.bmp", // 3
 	"backgrounds\\credit.bmp",	   // 4
 	"backgrounds\\htp.bmp",		   // 5
 	"backgrounds\\username.bmp",   // 6
-	"backgrounds\\gameover.bmp"	,   // 7
+	"backgrounds\\gameover.bmp",   // 7
 	"backgrounds\\story2.bmp",	   // 8
 	"backgrounds\\story3.bmp",	   // 9
 
 };
-char music[6][40] = {"music\\menubgm.wav",	 // 0
+char music[8][40] = {"music\\menubgm.wav",	 // 0
 					 "music\\gamebgm.wav",	 // 1
 					 "music\\gunshot.wav",	 // 2
 					 "music\\explosion.wav", // 3
-					 "music\\gameover.wav"}; // 4
+					 "music\\gameover.wav",  //4
+					 "music\\crash.wav",     //5
+					 }; 				 
 char ship[40][60] = {
 	"rocket\\ships\\0.bmp",
 	"rocket\\ships\\10.bmp",
@@ -126,7 +122,7 @@ typedef struct asteroid
 	double targetX;
 	double targetY;
 };
-// at a time we will deal with max 20 bullet theoritically
+// at a time we will deal with max 20 bullet 
 int maxbullet = 60;
 bullet bullets[60];
 int bulletind = 0;
@@ -169,6 +165,12 @@ char asteroidimg[50][60] = {
 	"asteroids\\tile029.bmp",
 	"asteroids\\tile030.bmp",
 	"asteroids\\tile031.bmp"};
+//we will have another special but limited weapon-> annihilation wave. which will destroy 5 closest asteroids at once
+int annihilationWaveCount = 1;
+bool isWaveActive = false;
+double WaveRadius;
+double WaveX,WaveY;
+int wavehits = 0; //the number of asteroids annihilation wave has killed
 // prototype of functions
 void soundbutton();
 void soundcontrol();
@@ -196,7 +198,9 @@ void ShowShipExplosion();
 void BulletHitCheck();
 void BulletHittedAsteroids();
 void AnimateExplosion();
-// prototype of functions ends here
+void AnimateAnnihilationWave();
+void WaveImpact();
+
 void iDraw()
 {
 	iClear();
@@ -249,15 +253,18 @@ void iMouse(int button, int state, int mx, int my)
 
 			break;
 		case 2:
-			
-			//story r bhinno page navigation
-			if(mx>460 && mx<520 && my>28 && my<88) GameState = 2;
-			else if(mx>522 && mx<582 && my>28 && my<88) GameState = 8;
-			else if(mx>584 && mx<644 && my>28 && my<88) GameState = 9;
+
+			// story r bhinno page navigation
+			if (mx > 460 && mx < 520 && my > 28 && my < 88)
+				GameState = 2;
+			else if (mx > 522 && mx < 582 && my > 28 && my < 88)
+				GameState = 8;
+			else if (mx > 584 && mx < 644 && my > 28 && my < 88)
+				GameState = 9;
 			else if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
-				{
-			GameState = 0; // getting back to main menu
-				}
+			{
+				GameState = 0; // getting back to main menu
+			}
 			break;
 		case 7:
 			// when we are in game over screen press any key to continue
@@ -268,37 +275,42 @@ void iMouse(int button, int state, int mx, int my)
 			iPauseTimer(t1); // pausing the text blinker timer
 			break;
 		case 8:
-			//story r bhinno page navigation
-			if(mx>460 && mx<520 && my>28 && my<88) GameState = 2;
-			else if(mx>522 && mx<582 && my>28 && my<88) GameState = 8;
-			else if(mx>584 && mx<644 && my>28 && my<88) GameState = 9;
+			// story r bhinno page navigation
+			if (mx > 460 && mx < 520 && my > 28 && my < 88)
+				GameState = 2;
+			else if (mx > 522 && mx < 582 && my > 28 && my < 88)
+				GameState = 8;
+			else if (mx > 584 && mx < 644 && my > 28 && my < 88)
+				GameState = 9;
 			else if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
-				{
-			GameState = 0; // getting back to main menu
-				}
+			{
+				GameState = 0; // getting back to main menu
+			}
 			break;
 		case 9:
-			//story r bhinno page navigation
-			if(mx>460 && mx<520 && my>28 && my<88) GameState = 2;
-			else if(mx>522 && mx<582 && my>28 && my<88) GameState = 8;
-			else if(mx>584 && mx<644 && my>28 && my<88) GameState = 9;
+			// story r bhinno page navigation
+			if (mx > 460 && mx < 520 && my > 28 && my < 88)
+				GameState = 2;
+			else if (mx > 522 && mx < 582 && my > 28 && my < 88)
+				GameState = 8;
+			else if (mx > 584 && mx < 644 && my > 28 && my < 88)
+				GameState = 9;
 			else if (mx >= 35 && mx <= 160 && my >= 508 && my <= 564)
-				{
-			GameState = 0; // getting back to main menu
-				}
+			{
+				GameState = 0; // getting back to main menu
+			}
 			break;
 		default:
 			backbuttonfunction(button, state, mx, my); // for any other regular window, we just need to handle the back buttons functionality
 			break;
 		}
-
 	}
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
 	}
 }
 // taking playername
-int ind = -1;
+int ind = -1; //index of the playername string
 void iKeyboard(unsigned char key)
 {
 	// taking name from user and storing it in playername array
@@ -330,6 +342,18 @@ void iKeyboard(unsigned char key)
 		{
 			shootbullet();
 			iResumeTimer(t3); // starting the bullet animation timer;
+		}
+		if(key=='\r'){ //annihilation wave will be generated if available
+			if(!isWaveActive && annihilationWaveCount!=0){
+				WaveRadius = 1;
+				WaveX = ShipX+62;
+				WaveY = ShipY+61;
+				isWaveActive = true;
+				annihilationWaveCount--;
+				iResumeTimer(twave);
+                //wave is initialized
+			}
+
 		}
 	}
 }
@@ -438,7 +462,7 @@ void MenuSetup()
 void menumousecontrol(int button, int state, int mx, int my)
 {
 	// 0-main menu  1-game   2-story1    3- high score  4-credit 5-how to play 6- name input 8-story2  9-story3
-	// clicked play button 
+	// clicked play button
 	if (mx >= 195 && mx <= 195 + buttonwidth && my >= 403 && my <= 403 + buttonheight)
 	{
 		// initializing the values for playing again
@@ -541,6 +565,11 @@ void healthbar()
 {
 	iSetColor(255, 255, 255);
 	iText(950, 550, "Health: ", GLUT_BITMAP_HELVETICA_18);
+	if(annihilationWaveCount>0) iSetColor(0,255,0); //if there is a wave the text will be green else white
+	else iSetColor(255,255,255);
+	if(annihilationWaveCount == 0) iText(910, 500, "Annihilation Wave: 0", GLUT_BITMAP_HELVETICA_18);
+	if(annihilationWaveCount == 1) iText(910, 500, "Annihilation Wave: 1", GLUT_BITMAP_HELVETICA_18);
+	if(annihilationWaveCount == 2) iText(910, 500, "Annihilation Wave: 2", GLUT_BITMAP_HELVETICA_18); //annihilation wave count
 	iSetColor(255, 0, 0);
 	iRectangle(950, 530, 100, 10);
 	if (PlayerHealth > 25)
@@ -551,6 +580,7 @@ void healthbar()
 		iSetColor(255, 0, 0);
 
 	iFilledRectangle(950, 530, PlayerHealth, 10);
+
 }
 void animateship()
 {
@@ -581,7 +611,10 @@ void ShipCollidedAsteroids()
 	// explosion
 	//
 	// ShowShipExplosion();
+	PlaySound(music[5], NULL, SND_FILENAME | SND_ASYNC);
 	ShipX = 500, ShipY = 260;
+	
+
 }
 void collision()
 {
@@ -608,7 +641,7 @@ void BulletHitCheck()
 		for (int bul = 0; bul < maxbullet; bul++)
 		{
 			double centertocenter = ((asteroids[as].X + 40 - bullets[bul].X - 6) * (asteroids[as].X + 40 - bullets[bul].X - 6) + (asteroids[as].Y + 40 - bullets[bul].Y - 6) * (asteroids[as].Y + 40 - bullets[bul].Y - 6));
-			if (centertocenter < (26 + 6) * 32) // the bullet is close enough for this perticular asteroids
+			if (centertocenter < 32 * 32) // the bullet is close enough for this perticular asteroids
 			{
 				if (bullets[bul].isActive && asteroids[as].isAlive)
 				{
@@ -623,6 +656,27 @@ void BulletHitCheck()
 				}
 			}
 		}
+	}
+}
+void WaveImpact(){
+	
+	for(int as= 0; as<maxasteroid;as++){
+		double centertocenter = ((asteroids[as].X + 40 - ShipX-62) * (asteroids[as].X + 40 - ShipX-62) + (asteroids[as].Y + 40 - ShipY-61) * (asteroids[as].Y + 40 - ShipY-61));
+		if(centertocenter<WaveRadius*WaveRadius && isWaveActive && asteroids[as].isAlive && asteroids[as].X+40 >= 5 &&  asteroids[as].X+40 <= 1075 && asteroids[as].Y+40 >= 5 && asteroids[as].Y+40 <= 600 ){
+			//wave has crossed that particular asteroid and we've ensured that the asteroid is inside the screem
+			asteroids[as].isAlive = false;
+			explosionimgind = 0;
+			isExploding = true;
+			impactX = asteroids[as].X;
+			impactY = asteroids[as].Y;
+			BulletHittedAsteroids(); //bullet hitting an asteroid and the wave crossing the asteroid will result in similar scenario
+			wavehits++;
+
+		}
+	}
+	if(wavehits>=5) {
+		isWaveActive =false;
+		wavehits = 0;
 	}
 }
 void AnimateExplosion()
@@ -650,6 +704,31 @@ void BulletHittedAsteroids()
 	iResumeTimer(texp);
 	// explosion sound will be played
 	PlaySound(music[3], NULL, SND_ASYNC);
+	//bonus annihilation wave will be added for every 30 hits 
+	if(PlayerScore%300 == 0){ //pore 300 dibo
+		if(annihilationWaveCount==0) annihilationWaveCount++;
+		else if(annihilationWaveCount==1) annihilationWaveCount++;
+	}
+}
+void AnimateAnnihilationWave(){
+
+	WaveRadius+=20;
+	int d1,d2,d3,d4; // ship theke screen er 4 corner er distance er square
+	int shipcx = ShipX + 62;
+	int shipcy = ShipY + 61;
+	d1 = (shipcx)*(shipcx) + (shipcy)*(shipcy); //(0,0) er distance er square
+	d2 = (shipcx-1080)*(shipcx-1080)  + (shipcy)*(shipcy); // bottom right corner (1080,0) er distance er square
+	d3 = (shipcx-1080)*(shipcx-1080)  + (shipcy-608)*(shipcy-608); //top right corner (1080,608) er distance er  square
+	d4 = (shipcx)*(shipcx) + (shipcy-608)*(shipcy-608);            //top left corner er distance er square
+	if((WaveRadius* WaveRadius)> d1 && (WaveRadius* WaveRadius)> d2 && (WaveRadius* WaveRadius)> d3 && (WaveRadius* WaveRadius)> d4 ){
+		//the wave is out of the scene
+		printf("Wave readius is %lf\n",WaveRadius);
+		isWaveActive = false;
+		WaveRadius = 1;
+		iPauseTimer(twave);
+	}
+
+
 }
 void maingame()
 {
@@ -657,10 +736,10 @@ void maingame()
 	//  in the main game section we will have score and life option in the corner;
 	scorebar();
 	healthbar();
-	// load ship
-	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
+	// // load ship
+	// iShowBMP2(ShipX, ShipY, ship[shipind], 0);
 	// check wether there is any ship-asteroid collision
-	collision(); // collision checker
+	collision(); // collision checker between ship and asteroids
 	// loading the asteroids
 	LoadAsteroids();
 	BulletHitCheck();
@@ -677,8 +756,6 @@ void maingame()
 		isExploding = false;
 	if (isExploding) // meaning there is an explosion going on
 		iShowBMP2(impactX, impactY, explosionimg[explosionimgind], 0);
-	// scoreupdate();
-	// healthupdate();  //will update them accordingly when needed.. currently wrote a demo update code in imouse founction
 	if (PlayerHealth == 0)
 	{
 		GameState = 7;
@@ -691,6 +768,14 @@ void maingame()
 	}
 	// load ship
 	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
+	//if a wave is active then generate it
+	if(isWaveActive) {
+
+		iSetColor(0,255,0);
+		iCircle(WaveX, WaveY, WaveRadius,10000);//generating a new frame of the wave
+		WaveImpact(); // check if wave crossed an asteroid
+	}
+
 }
 void AnimateAsteroids()
 {
@@ -762,31 +847,37 @@ void resetgamedata()
 	{
 		asteroids[i].isAlive = false;
 	}
+	annihilationWaveCount = 1;
 }
 void showhighscore()
 {
 	FILE *fptr;
 	char names[5][50]; // storing the name of the top scorers
 	int HighScores[5]; // storing their score in respective index
+
 	fptr = fopen("highscores.txt", "r");
-	int i = 0;
+	int i = 0,j;
 	while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
 	{
 		i++;
 	} // now we have extracted score data from highscore file
+	
+	j=i;
 	fclose(fptr);
 	// showing the names
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < j; i++)
 	{
-		iText(350, 175 + i * 55, names[4 - i], GLUT_BITMAP_TIMES_ROMAN_24);
+		
+		iText(350, 395 - i * 55, names[i], GLUT_BITMAP_TIMES_ROMAN_24);
 	}
 	// showing the scores
 	iSetColor(255, 255, 255);
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < j; i++)
 	{
+	
 		char StrScore[10];
-		sprintf(StrScore, "%d", HighScores[4 - i]);
-		iText(650, 175 + i * 55, StrScore, GLUT_BITMAP_TIMES_ROMAN_24);
+		sprintf(StrScore, "%d", HighScores[i]);
+		iText(650, 395 - i * 55, StrScore, GLUT_BITMAP_TIMES_ROMAN_24);
 	}
 }
 void gameoverscreen()
@@ -813,11 +904,10 @@ void playernamemousecontrol(int button, int state, int mx, int my)
 			printf("Player name is %s\n", playername);
 		}
 	}
-	else if(mx>=16 && mx<=134 && my>=545 && my<= 592){ //back button clicked
+	else if (mx >= 16 && mx <= 134 && my >= 545 && my <= 592)
+	{ // back button clicked
 		GameState = 0;
 		ind = -1; // the player name index.
-
-
 	}
 }
 void colorchanger()
@@ -870,6 +960,8 @@ int main()
 	iPauseTimer(t4);
 	texp = iSetTimer(1, AnimateExplosion);
 	iPauseTimer(texp);
+	twave = iSetTimer(0.01,AnimateAnnihilationWave);
+	iPauseTimer(twave);
 	PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
 	iInitialize(screenWidth, screenHeight, "Cosmic Guardians");
 	return 0;
