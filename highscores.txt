@@ -1,5 +1,6 @@
-messi 1710
-ronaldo 1460
-haaland 1430
-alim 1070
-random 960
+karim 800
+alim 710
+philip 700
+rahim 600
+alim 300
+william 20

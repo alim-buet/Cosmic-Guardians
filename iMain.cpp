@@ -516,42 +516,44 @@ void backbuttonfunction(int button, int state, int mx, int my)
 }
 void modifyscoreboard()
 {
-	FILE *fptr;
-	char names[5][50]; // storing the name of the top scorers
-	int HighScores[5]; // storing their score in respective index
-	fptr = fopen("highscores.txt", "r");
-	int i = 0;
-	while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
-	{
-		i++;
-	} // now we have extracted score data from highscore file
-	fclose(fptr);
-	// now we will modify the leaderboard
-	int isdone = 0;
-	for (int i = 0; i < 5; i++)
-	{
-		if (isdone)
-			break;
-		if (PlayerScore >= HighScores[i])
-		{
-			isdone = 1;
-			for (int j = 4; j > i; j--)
-			{
-				strcpy(names[j], names[j - 1]);
-				HighScores[j] = HighScores[j - 1];
-			}
-			HighScores[i] = PlayerScore;
-			strcpy(names[i], playername);
-		}
-	}
-	// now we have our sorted arrays.. we will write the modified text in the highscore file
-	FILE *fptr2;
-	fptr2 = fopen("highscores.txt", "w");
-	for (int i = 0; i < 5; ++i)
-	{
-		fprintf(fptr2, "%s %d\n", names[i], HighScores[i]);
-	}
-	fclose(fptr2);
+    FILE *fptr;
+    char names[100][50]; 
+    int HighScores[100]; 
+    fptr = fopen("highscores.txt", "r");
+    int i = 0;
+    while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
+    {
+        i++;
+        if (i >= 100)
+            break;
+    } // now we have extracted score data from highscore file
+    fclose(fptr);
+
+    // new playername ar score ke add korbo
+    int j;
+    for (j = i - 1; j >= 0; j--)
+    {
+        if (PlayerScore > HighScores[j])
+        {
+            strcpy(names[j + 1], names[j]);
+            HighScores[j + 1] = HighScores[j];
+        }
+        else
+        {
+            break;
+        }
+    }
+    strcpy(names[j + 1], playername);
+    HighScores[j + 1] = PlayerScore;
+
+    // now we have our sorted arrays with the new score added
+    // modified scoreboard ekhon txt file e push korbo
+    fptr = fopen("highscores.txt", "w");
+    for (int k = 0; k < i + 1 && k < 100; ++k)
+    {
+        fprintf(fptr, "%s %d\n", names[k], HighScores[k]);
+    }
+    fclose(fptr);
 }
 void scorebar()
 {
@@ -851,33 +853,48 @@ void resetgamedata()
 }
 void showhighscore()
 {
-	FILE *fptr;
-	char names[5][50]; // storing the name of the top scorers
-	int HighScores[5]; // storing their score in respective index
+    FILE *fptr;
+    char names[100][50]; 
+    int HighScores[100]; 
 
-	fptr = fopen("highscores.txt", "r");
-	int i = 0,j;
-	while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
-	{
-		i++;
-	} // now we have extracted score data from highscore file
-	
-	j=i;
-	fclose(fptr);
-	// showing the names
-	for (int i = 0; i < j; i++)
-	{
-		
-		iText(350, 395 - i * 55, names[i], GLUT_BITMAP_TIMES_ROMAN_24);
-	}
-	// showing the scores
-	iSetColor(255, 255, 255);
-	for (int i = 0; i < j; i++)
+    fptr = fopen("highscores.txt", "r");
+    int i = 0;
+    while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
+    {
+        i++;
+        if (i >= 100)
+            break;
+    } 
+    fclose(fptr);
+
+    // bubble sort diye data sorting
+    for (int m = 0; m < i - 1; m++)
+    {
+        for (int n = 0; n < i - m - 1; n++)
+        {
+            if (HighScores[n] < HighScores[n + 1])
+            {
+                int tempScore = HighScores[n];
+                HighScores[n] = HighScores[n + 1];
+                HighScores[n + 1] = tempScore;
+                char tempName[50];
+                strcpy(tempName, names[n]);
+                strcpy(names[n], names[n + 1]);
+                strcpy(names[n + 1], tempName);
+            }
+        }
+    }
+    iSetColor(255,255,255);
+    for (int j = 0; j < i && j < 5; j++)
+    {
+        iText(350, 395 - j * 55, names[j], GLUT_BITMAP_TIMES_ROMAN_24);
+    }
+    for (int j = 0; j < i && j < 5; j++)
 	{
 	
 		char StrScore[10];
-		sprintf(StrScore, "%d", HighScores[i]);
-		iText(650, 395 - i * 55, StrScore, GLUT_BITMAP_TIMES_ROMAN_24);
+		sprintf(StrScore, "%d", HighScores[j]);
+		iText(650, 395 - j * 55, StrScore, GLUT_BITMAP_TIMES_ROMAN_24);
 	}
 }
 void gameoverscreen()
