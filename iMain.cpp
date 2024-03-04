@@ -16,7 +16,7 @@ int t2;			   // timer 2 is for animating the ship
 int t3;			   // timer 3 is for animating the bullets
 int t4;			   // timer 4 is for animating the asteroids
 int texp;		   // this timer will control the animations of explosions
-int twave;         // this timer will animate and control the functionality of annihilation wave
+int twave;		   // this timer will animate and control the functionality of annihilation wave
 int GameState = 0; // 0-main menu  1-game   2-story    3- high score  4-credit 5-how to play 6- playername  7- game over
 char playername[100];
 int PlayerScore = 0;
@@ -38,13 +38,14 @@ char bg[15][40] = {
 	"backgrounds\\story3.bmp",	   // 9
 
 };
-char music[8][40] = {"music\\menubgm.wav",	 // 0
-					 "music\\gamebgm.wav",	 // 1
-					 "music\\gunshot.wav",	 // 2
-					 "music\\explosion.wav", // 3
-					 "music\\gameover.wav",  //4
-					 "music\\crash.wav",     //5
-					 }; 				 
+char music[8][40] = {
+	"music\\menubgm.wav",	// 0
+	"music\\gamebgm.wav",	// 1
+	"music\\gunshot.wav",	// 2
+	"music\\explosion.wav", // 3
+	"music\\gameover.wav",	// 4
+	"music\\crash.wav",		// 5
+};
 char ship[40][60] = {
 	"rocket\\ships\\0.bmp",
 	"rocket\\ships\\10.bmp",
@@ -122,7 +123,7 @@ typedef struct asteroid
 	double targetX;
 	double targetY;
 };
-// at a time we will deal with max 20 bullet 
+// at a time we will deal with max 20 bullet
 int maxbullet = 60;
 bullet bullets[60];
 int bulletind = 0;
@@ -165,12 +166,12 @@ char asteroidimg[50][60] = {
 	"asteroids\\tile029.bmp",
 	"asteroids\\tile030.bmp",
 	"asteroids\\tile031.bmp"};
-//we will have another special but limited weapon-> annihilation wave. which will destroy 5 closest asteroids at once
+// we will have another special but limited weapon-> annihilation wave. which will destroy 5 closest asteroids at once
 int annihilationWaveCount = 1;
 bool isWaveActive = false;
 double WaveRadius;
-double WaveX,WaveY;
-int wavehits = 0; //the number of asteroids annihilation wave has killed
+double WaveX, WaveY;
+int wavehits = 0; // the number of asteroids annihilation wave has killed
 // prototype of functions
 void soundbutton();
 void soundcontrol();
@@ -310,7 +311,7 @@ void iMouse(int button, int state, int mx, int my)
 	}
 }
 // taking playername
-int ind = -1; //index of the playername string
+int ind = -1; // index of the playername string
 void iKeyboard(unsigned char key)
 {
 	// taking name from user and storing it in playername array
@@ -343,17 +344,18 @@ void iKeyboard(unsigned char key)
 			shootbullet();
 			iResumeTimer(t3); // starting the bullet animation timer;
 		}
-		if(key=='\r'){ //annihilation wave will be generated if available
-			if(!isWaveActive && annihilationWaveCount!=0){
+		if (key == '\r')
+		{ // annihilation wave will be generated if available
+			if (!isWaveActive && annihilationWaveCount != 0)
+			{
 				WaveRadius = 1;
-				WaveX = ShipX+62;
-				WaveY = ShipY+61;
+				WaveX = ShipX + 62;
+				WaveY = ShipY + 61;
 				isWaveActive = true;
 				annihilationWaveCount--;
 				iResumeTimer(twave);
-                //wave is initialized
+				// wave is initialized
 			}
-
 		}
 	}
 }
@@ -516,44 +518,44 @@ void backbuttonfunction(int button, int state, int mx, int my)
 }
 void modifyscoreboard()
 {
-    FILE *fptr;
-    char names[100][50]; 
-    int HighScores[100]; 
-    fptr = fopen("highscores.txt", "r");
-    int i = 0;
-    while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
-    {
-        i++;
-        if (i >= 100)
-            break;
-    } // now we have extracted score data from highscore file
-    fclose(fptr);
+	FILE *fptr;
+	char names[100][50];
+	int HighScores[100];
+	fptr = fopen("highscores.txt", "r");
+	int i = 0;
+	while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
+	{
+		i++;
+		if (i >= 100)
+			break;
+	} // now we have extracted score data from highscore file
+	fclose(fptr);
 
-    // new playername ar score ke add korbo
-    int j;
-    for (j = i - 1; j >= 0; j--)
-    {
-        if (PlayerScore > HighScores[j])
-        {
-            strcpy(names[j + 1], names[j]);
-            HighScores[j + 1] = HighScores[j];
-        }
-        else
-        {
-            break;
-        }
-    }
-    strcpy(names[j + 1], playername);
-    HighScores[j + 1] = PlayerScore;
+	// new playername ar score ke add korbo
+	int j;
+	for (j = i - 1; j >= 0; j--)
+	{
+		if (PlayerScore > HighScores[j])
+		{
+			strcpy(names[j + 1], names[j]);
+			HighScores[j + 1] = HighScores[j];
+		}
+		else
+		{
+			break;
+		}
+	}
+	strcpy(names[j + 1], playername);
+	HighScores[j + 1] = PlayerScore;
 
-    // now we have our sorted arrays with the new score added
-    // modified scoreboard ekhon txt file e push korbo
-    fptr = fopen("highscores.txt", "w");
-    for (int k = 0; k < i + 1 && k < 100; ++k)
-    {
-        fprintf(fptr, "%s %d\n", names[k], HighScores[k]);
-    }
-    fclose(fptr);
+	// now we have our sorted arrays with the new score added
+	// modified scoreboard ekhon txt file e push korbo
+	fptr = fopen("highscores.txt", "w");
+	for (int k = 0; k < i + 1 && k < 100; ++k)
+	{
+		fprintf(fptr, "%s %d\n", names[k], HighScores[k]);
+	}
+	fclose(fptr);
 }
 void scorebar()
 {
@@ -567,11 +569,16 @@ void healthbar()
 {
 	iSetColor(255, 255, 255);
 	iText(950, 550, "Health: ", GLUT_BITMAP_HELVETICA_18);
-	if(annihilationWaveCount>0) iSetColor(0,255,0); //if there is a wave the text will be green else white
-	else iSetColor(255,255,255);
-	if(annihilationWaveCount == 0) iText(910, 500, "Annihilation Wave: 0", GLUT_BITMAP_HELVETICA_18);
-	if(annihilationWaveCount == 1) iText(910, 500, "Annihilation Wave: 1", GLUT_BITMAP_HELVETICA_18);
-	if(annihilationWaveCount == 2) iText(910, 500, "Annihilation Wave: 2", GLUT_BITMAP_HELVETICA_18); //annihilation wave count
+	if (annihilationWaveCount > 0)
+		iSetColor(0, 255, 0); // if there is a wave the text will be green else white
+	else
+		iSetColor(255, 255, 255);
+	if (annihilationWaveCount == 0)
+		iText(910, 500, "Annihilation Wave: 0", GLUT_BITMAP_HELVETICA_18);
+	if (annihilationWaveCount == 1)
+		iText(910, 500, "Annihilation Wave: 1", GLUT_BITMAP_HELVETICA_18);
+	if (annihilationWaveCount == 2)
+		iText(910, 500, "Annihilation Wave: 2", GLUT_BITMAP_HELVETICA_18); // annihilation wave count
 	iSetColor(255, 0, 0);
 	iRectangle(950, 530, 100, 10);
 	if (PlayerHealth > 25)
@@ -582,7 +589,6 @@ void healthbar()
 		iSetColor(255, 0, 0);
 
 	iFilledRectangle(950, 530, PlayerHealth, 10);
-
 }
 void animateship()
 {
@@ -615,8 +621,6 @@ void ShipCollidedAsteroids()
 	// ShowShipExplosion();
 	PlaySound(music[5], NULL, SND_FILENAME | SND_ASYNC);
 	ShipX = 500, ShipY = 260;
-	
-
 }
 void collision()
 {
@@ -660,24 +664,27 @@ void BulletHitCheck()
 		}
 	}
 }
-void WaveImpact(){
-	
-	for(int as= 0; as<maxasteroid;as++){
-		double centertocenter = ((asteroids[as].X + 40 - ShipX-62) * (asteroids[as].X + 40 - ShipX-62) + (asteroids[as].Y + 40 - ShipY-61) * (asteroids[as].Y + 40 - ShipY-61));
-		if(centertocenter<WaveRadius*WaveRadius && isWaveActive && asteroids[as].isAlive && asteroids[as].X+40 >= 5 &&  asteroids[as].X+40 <= 1075 && asteroids[as].Y+40 >= 5 && asteroids[as].Y+40 <= 600 ){
-			//wave has crossed that particular asteroid and we've ensured that the asteroid is inside the screem
+void WaveImpact()
+{
+
+	for (int as = 0; as < maxasteroid; as++)
+	{
+		double centertocenter = ((asteroids[as].X + 40 - ShipX - 62) * (asteroids[as].X + 40 - ShipX - 62) + (asteroids[as].Y + 40 - ShipY - 61) * (asteroids[as].Y + 40 - ShipY - 61));
+		if (centertocenter < WaveRadius * WaveRadius && isWaveActive && asteroids[as].isAlive && asteroids[as].X + 40 >= 5 && asteroids[as].X + 40 <= 1075 && asteroids[as].Y + 40 >= 5 && asteroids[as].Y + 40 <= 600)
+		{
+			// wave has crossed that particular asteroid and we've ensured that the asteroid is inside the screem
 			asteroids[as].isAlive = false;
 			explosionimgind = 0;
 			isExploding = true;
 			impactX = asteroids[as].X;
 			impactY = asteroids[as].Y;
-			BulletHittedAsteroids(); //bullet hitting an asteroid and the wave crossing the asteroid will result in similar scenario
+			BulletHittedAsteroids(); // bullet hitting an asteroid and the wave crossing the asteroid will result in similar scenario
 			wavehits++;
-
 		}
 	}
-	if(wavehits>=5) {
-		isWaveActive =false;
+	if (wavehits >= 5)
+	{
+		isWaveActive = false;
 		wavehits = 0;
 	}
 }
@@ -706,31 +713,34 @@ void BulletHittedAsteroids()
 	iResumeTimer(texp);
 	// explosion sound will be played
 	PlaySound(music[3], NULL, SND_ASYNC);
-	//bonus annihilation wave will be added for every 30 hits 
-	if(PlayerScore%300 == 0){ //pore 300 dibo
-		if(annihilationWaveCount==0) annihilationWaveCount++;
-		else if(annihilationWaveCount==1) annihilationWaveCount++;
+	// bonus annihilation wave will be added for every 30 hits
+	if (PlayerScore % 300 == 0)
+	{ // pore 300 dibo
+		if (annihilationWaveCount == 0)
+			annihilationWaveCount++;
+		else if (annihilationWaveCount == 1)
+			annihilationWaveCount++;
 	}
 }
-void AnimateAnnihilationWave(){
+void AnimateAnnihilationWave()
+{
 
-	WaveRadius+=20;
-	int d1,d2,d3,d4; // ship theke screen er 4 corner er distance er square
+	WaveRadius += 20;
+	int d1, d2, d3, d4; // ship theke screen er 4 corner er distance er square
 	int shipcx = ShipX + 62;
 	int shipcy = ShipY + 61;
-	d1 = (shipcx)*(shipcx) + (shipcy)*(shipcy); //(0,0) er distance er square
-	d2 = (shipcx-1080)*(shipcx-1080)  + (shipcy)*(shipcy); // bottom right corner (1080,0) er distance er square
-	d3 = (shipcx-1080)*(shipcx-1080)  + (shipcy-608)*(shipcy-608); //top right corner (1080,608) er distance er  square
-	d4 = (shipcx)*(shipcx) + (shipcy-608)*(shipcy-608);            //top left corner er distance er square
-	if((WaveRadius* WaveRadius)> d1 && (WaveRadius* WaveRadius)> d2 && (WaveRadius* WaveRadius)> d3 && (WaveRadius* WaveRadius)> d4 ){
-		//the wave is out of the scene
-		printf("Wave readius is %lf\n",WaveRadius);
+	d1 = (shipcx) * (shipcx) + (shipcy) * (shipcy);							  //(0,0) er distance er square
+	d2 = (shipcx - 1080) * (shipcx - 1080) + (shipcy) * (shipcy);			  // bottom right corner (1080,0) er distance er square
+	d3 = (shipcx - 1080) * (shipcx - 1080) + (shipcy - 608) * (shipcy - 608); // top right corner (1080,608) er distance er  square
+	d4 = (shipcx) * (shipcx) + (shipcy - 608) * (shipcy - 608);				  // top left corner er distance er square
+	if ((WaveRadius * WaveRadius) > d1 && (WaveRadius * WaveRadius) > d2 && (WaveRadius * WaveRadius) > d3 && (WaveRadius * WaveRadius) > d4)
+	{
+		// the wave is out of the scene
+		printf("Wave readius is %lf\n", WaveRadius);
 		isWaveActive = false;
 		WaveRadius = 1;
 		iPauseTimer(twave);
 	}
-
-
 }
 void maingame()
 {
@@ -770,14 +780,14 @@ void maingame()
 	}
 	// load ship
 	iShowBMP2(ShipX, ShipY, ship[shipind], 0);
-	//if a wave is active then generate it
-	if(isWaveActive) {
+	// if a wave is active then generate it
+	if (isWaveActive)
+	{
 
-		iSetColor(0,255,0);
-		iCircle(WaveX, WaveY, WaveRadius,10000);//generating a new frame of the wave
-		WaveImpact(); // check if wave crossed an asteroid
+		iSetColor(0, 255, 0);
+		iCircle(WaveX, WaveY, WaveRadius, 10000); // generating a new frame of the wave
+		WaveImpact();							  // check if wave crossed an asteroid
 	}
-
 }
 void AnimateAsteroids()
 {
@@ -853,45 +863,45 @@ void resetgamedata()
 }
 void showhighscore()
 {
-    FILE *fptr;
-    char names[100][50]; 
-    int HighScores[100]; 
+	FILE *fptr;
+	char names[100][50];
+	int HighScores[100];
 
-    fptr = fopen("highscores.txt", "r");
-    int i = 0;
-    while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
-    {
-        i++;
-        if (i >= 100)
-            break;
-    } 
-    fclose(fptr);
-
-    // bubble sort diye data sorting
-    for (int m = 0; m < i - 1; m++)
-    {
-        for (int n = 0; n < i - m - 1; n++)
-        {
-            if (HighScores[n] < HighScores[n + 1])
-            {
-                int tempScore = HighScores[n];
-                HighScores[n] = HighScores[n + 1];
-                HighScores[n + 1] = tempScore;
-                char tempName[50];
-                strcpy(tempName, names[n]);
-                strcpy(names[n], names[n + 1]);
-                strcpy(names[n + 1], tempName);
-            }
-        }
-    }
-    iSetColor(255,255,255);
-    for (int j = 0; j < i && j < 5; j++)
-    {
-        iText(350, 395 - j * 55, names[j], GLUT_BITMAP_TIMES_ROMAN_24);
-    }
-    for (int j = 0; j < i && j < 5; j++)
+	fptr = fopen("highscores.txt", "r");
+	int i = 0;
+	while (fscanf(fptr, "%s %d", names[i], &HighScores[i]) != EOF)
 	{
-	
+		i++;
+		if (i >= 100)
+			break;
+	}
+	fclose(fptr);
+
+	// bubble sort diye data sorting
+	for (int m = 0; m < i - 1; m++)
+	{
+		for (int n = 0; n < i - m - 1; n++)
+		{
+			if (HighScores[n] < HighScores[n + 1])
+			{
+				int tempScore = HighScores[n];
+				HighScores[n] = HighScores[n + 1];
+				HighScores[n + 1] = tempScore;
+				char tempName[50];
+				strcpy(tempName, names[n]);
+				strcpy(names[n], names[n + 1]);
+				strcpy(names[n + 1], tempName);
+			}
+		}
+	}
+	iSetColor(255, 255, 255);
+	for (int j = 0; j < i && j < 5; j++)
+	{
+		iText(350, 395 - j * 55, names[j], GLUT_BITMAP_TIMES_ROMAN_24);
+	}
+	for (int j = 0; j < i && j < 5; j++)
+	{
+
 		char StrScore[10];
 		sprintf(StrScore, "%d", HighScores[j]);
 		iText(650, 395 - j * 55, StrScore, GLUT_BITMAP_TIMES_ROMAN_24);
@@ -977,7 +987,7 @@ int main()
 	iPauseTimer(t4);
 	texp = iSetTimer(1, AnimateExplosion);
 	iPauseTimer(texp);
-	twave = iSetTimer(0.01,AnimateAnnihilationWave);
+	twave = iSetTimer(0.01, AnimateAnnihilationWave);
 	iPauseTimer(twave);
 	PlaySound(music[0], NULL, SND_LOOP | SND_ASYNC);
 	iInitialize(screenWidth, screenHeight, "Cosmic Guardians");
